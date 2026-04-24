@@ -47,6 +47,23 @@ public class CharacterSpriteAnimator : MonoBehaviour
         new(5, 4)
     };
 
+    private static readonly Vector2Int[] AttackFramesAlt =
+    {
+        new(0, 5),
+        new(1, 5),
+        new(2, 5),
+        new(3, 5),
+        new(4, 5),
+        new(5, 5)
+    };
+
+    private static readonly Vector2Int[] HurtFrames =
+    {
+        new(0, 6),
+        new(1, 6),
+        new(2, 6)
+    };
+
     private static readonly Dictionary<Vector2Int, Sprite> CachedSprites = new();
     private static Texture2D cachedTexture;
 
@@ -68,7 +85,8 @@ public class CharacterSpriteAnimator : MonoBehaviour
         Run,
         Jump,
         Fall,
-        Attack
+        Attack,
+        Hurt
     }
 
     private AnimationState currentState;
@@ -123,6 +141,11 @@ public class CharacterSpriteAnimator : MonoBehaviour
             return AnimationState.Attack;
         }
 
+        if (player.IsHurt)
+        {
+            return AnimationState.Hurt;
+        }
+
         Vector2 velocity = player.Velocity;
         if (!player.IsGrounded)
         {
@@ -145,7 +168,8 @@ public class CharacterSpriteAnimator : MonoBehaviour
             AnimationState.Run => RunFrames,
             AnimationState.Jump => JumpFrames,
             AnimationState.Fall => FallFrames,
-            AnimationState.Attack => AttackFrames,
+            AnimationState.Attack => player.AttackVariant == 0 ? AttackFrames : AttackFramesAlt,
+            AnimationState.Hurt => HurtFrames,
             _ => IdleFrames
         };
 
@@ -153,6 +177,7 @@ public class CharacterSpriteAnimator : MonoBehaviour
         {
             AnimationState.Run => 0.08f,
             AnimationState.Attack => 0.06f,
+            AnimationState.Hurt => 0.07f,
             AnimationState.Jump => 0.13f,
             AnimationState.Fall => 0.13f,
             _ => 0.22f

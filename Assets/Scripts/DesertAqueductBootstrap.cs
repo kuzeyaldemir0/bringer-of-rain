@@ -99,21 +99,21 @@ public class DesertAqueductBootstrap : MonoBehaviour
     {
         CreateSolid("EntryFloor", new Vector2(0f, -4.5f), new Vector2(16f, 1f), SandColor);
         CreateSolid("JunctionFloor", new Vector2(12f, -4.5f), new Vector2(8f, 1f), SandColor);
-        CreateSolid("UpperLedge", new Vector2(19f, 0.25f), new Vector2(6f, 1f), StoneColor);
-        CreateSolid("UpperBridgeLeft", new Vector2(28f, 0.25f), new Vector2(10f, 1f), StoneColor);
-        CreateSolid("UpperBridgeRight", new Vector2(41f, 0.25f), new Vector2(10f, 1f), StoneColor);
+        CreateOneWayPlatform("UpperLedge", new Vector2(19f, 0.25f), new Vector2(6f, 1f), StoneColor);
+        CreateOneWayPlatform("UpperBridgeLeft", new Vector2(28f, 0.25f), new Vector2(10f, 1f), StoneColor);
+        CreateOneWayPlatform("UpperBridgeRight", new Vector2(41f, 0.25f), new Vector2(10f, 1f), StoneColor);
 
         GameObject gateBarrier = CreateSolid("JunctionGate", new Vector2(22.5f, -0.35f), new Vector2(0.8f, 3.6f), RustColor);
-        GameObject restoredBridge = CreateOneWayPlatform("RestoredWaterBridge", new Vector2(34.5f, 0.25f), new Vector2(3f, 1f), WaterColor);
+        GameObject restoredBridge = CreateOneWayPlatform("RestoredWaterBridge", new Vector2(34.5f, 0.25f), new Vector2(4.6f, 1f), WaterColor);
         restoredBridge.SetActive(false);
         unlockOnRestore.Add(restoredBridge);
 
-        GameObject stepOne = CreateOneWayPlatform("WaterStep01", new Vector2(20.6f, -8.8f), new Vector2(3.5f, 0.55f), WaterColor);
-        GameObject stepTwo = CreateOneWayPlatform("WaterStep02", new Vector2(22.2f, -7.25f), new Vector2(3.5f, 0.55f), WaterColor);
-        GameObject stepThree = CreateOneWayPlatform("WaterStep03", new Vector2(23.8f, -5.7f), new Vector2(3.6f, 0.55f), WaterColor);
-        GameObject stepFour = CreateOneWayPlatform("WaterStep04", new Vector2(25.6f, -4.15f), new Vector2(3.7f, 0.55f), WaterColor);
-        GameObject stepFive = CreateOneWayPlatform("WaterStep05", new Vector2(27.5f, -2.6f), new Vector2(3.9f, 0.55f), WaterColor);
-        GameObject stepSix = CreateOneWayPlatform("WaterStep06", new Vector2(29.7f, -1.0f), new Vector2(4.3f, 0.55f), WaterColor);
+        GameObject stepOne = CreateOneWayPlatform("WaterStep01", new Vector2(37.6f, -8.55f), new Vector2(3.4f, 0.55f), WaterColor);
+        GameObject stepTwo = CreateOneWayPlatform("WaterStep02", new Vector2(39.4f, -7.0f), new Vector2(3.4f, 0.55f), WaterColor);
+        GameObject stepThree = CreateOneWayPlatform("WaterStep03", new Vector2(41.2f, -5.45f), new Vector2(3.5f, 0.55f), WaterColor);
+        GameObject stepFour = CreateOneWayPlatform("WaterStep04", new Vector2(42.8f, -3.9f), new Vector2(3.6f, 0.55f), WaterColor);
+        GameObject stepFive = CreateOneWayPlatform("WaterStep05", new Vector2(43.9f, -2.35f), new Vector2(4f, 0.55f), WaterColor);
+        GameObject stepSix = CreateOneWayPlatform("WaterStep06", new Vector2(41.6f, -1.0f), new Vector2(6.8f, 0.55f), WaterColor);
         stepOne.SetActive(false);
         stepTwo.SetActive(false);
         stepThree.SetActive(false);
@@ -155,10 +155,12 @@ public class DesertAqueductBootstrap : MonoBehaviour
         unlockOnRestore.Add(waterFlowBridge);
         unlockOnRestore.Add(waterFlowB);
 
-        CreateEnemy("SentryScout", new Vector2(4.5f, -3.55f), 2.6f, 6.8f, 1.45f);
-        CreateEnemy("SentryA", new Vector2(19.5f, -9.6f), 17.2f, 21.4f, 1.8f);
-        CreateEnemy("SentryB", new Vector2(26.2f, -9.6f), 24.5f, 28f, 1.95f);
-        CreateEnemy("SentryC", new Vector2(31f, 1.18f), 28f, 37f, 1.6f);
+        CreateEnemy("SentryScout", new Vector2(4.5f, -3.55f), 2.6f, 6.8f, 1.45f, "MaskDude");
+        CreateEnemy("SentryA", new Vector2(19.5f, -9.6f), 17.2f, 21.4f, 1.8f, "MaskDude");
+        CreateEnemy("SentryB", new Vector2(26.2f, -9.6f), 24.5f, 28f, 1.95f, "MaskDude");
+        CreateEnemy("SentryGate", new Vector2(35.5f, -9.6f), 33.2f, 37.2f, 2.05f, "MaskDude");
+        CreateEnemy("SentryC", new Vector2(31f, 1.18f), 28f, 37f, 1.6f, "NinjaFrog");
+        CreateEnemy("SentryD", new Vector2(39.5f, 1.18f), 37.4f, 44f, 1.7f, "NinjaFrog");
 
         CreateHazard("DrySpikes", new Vector2(35f, -10f), new Vector2(2f, 0.7f), false);
         CreateHazard("KillPlane", new Vector2(20f, -18f), new Vector2(80f, 4f), true);
@@ -191,6 +193,7 @@ public class DesertAqueductBootstrap : MonoBehaviour
 
         Rigidbody2D body = playerObject.AddComponent<Rigidbody2D>();
         body.freezeRotation = true;
+        body.interpolation = RigidbodyInterpolation2D.Interpolate;
 
         CapsuleCollider2D capsule = playerObject.AddComponent<CapsuleCollider2D>();
         capsule.size = new Vector2(0.95f, 1.8f);
@@ -242,8 +245,10 @@ public class DesertAqueductBootstrap : MonoBehaviour
         effector.surfaceArc = 170f;
         effector.sideArc = 0f;
 
-        CreateChildVisual(platform.transform, "TopLip", new Vector2(0f, 0.38f), new Vector2(0.98f, 0.18f), new Color(0.8f, 0.97f, 1f, 0.98f), 3);
-        CreateChildVisual(platform.transform, "Underside", new Vector2(0f, -0.34f), new Vector2(0.92f, 0.22f), new Color(0.05f, 0.49f, 0.62f, 0.85f), 1);
+        Color topLipColor = Color.Lerp(color, Color.white, 0.42f);
+        Color undersideColor = Color.Lerp(color, ShadowColor, 0.35f);
+        CreateChildVisual(platform.transform, "TopLip", new Vector2(0f, 0.38f), new Vector2(0.98f, 0.18f), new Color(topLipColor.r, topLipColor.g, topLipColor.b, 0.98f), 3);
+        CreateChildVisual(platform.transform, "Underside", new Vector2(0f, -0.34f), new Vector2(0.92f, 0.22f), new Color(undersideColor.r, undersideColor.g, undersideColor.b, 0.92f), 1);
         return platform;
     }
 
@@ -282,12 +287,12 @@ public class DesertAqueductBootstrap : MonoBehaviour
         return visual;
     }
 
-    private void CreateEnemy(string objectName, Vector2 position, float minX, float maxX, float speed)
+    private void CreateEnemy(string objectName, Vector2 position, float minX, float maxX, float speed, string spriteSet)
     {
         GameObject enemyObject = new(objectName);
         enemyObject.transform.SetParent(worldRoot, false);
         enemyObject.transform.position = position;
-        enemyObject.transform.localScale = new Vector3(1.1f, 0.9f, 1f);
+        enemyObject.transform.localScale = new Vector3(1.28f, 1.28f, 1f);
 
         enemyObject.AddComponent<SpriteRenderer>();
         enemyObject.AddComponent<BoxCollider2D>();
@@ -295,16 +300,11 @@ public class DesertAqueductBootstrap : MonoBehaviour
 
         EnemyPatrol enemy = enemyObject.AddComponent<EnemyPatrol>();
         enemy.Configure(minX, maxX, speed);
+        EnemySpriteAnimator animator = enemyObject.AddComponent<EnemySpriteAnimator>();
+        animator.Configure(spriteSet);
 
-        CreateChildVisual(enemyObject.transform, "Shell", new Vector2(0f, 0.12f), new Vector2(0.92f, 0.58f), new Color(0.67f, 0.31f, 0.2f, 1f), 10);
-        CreateChildVisual(enemyObject.transform, "Jaw", new Vector2(0f, -0.14f), new Vector2(0.66f, 0.2f), new Color(0.24f, 0.09f, 0.07f, 1f), 10);
-        CreateChildVisual(enemyObject.transform, "Eye", new Vector2(0.2f, 0.1f), new Vector2(0.18f, 0.18f), WaterColor, 11);
-
-        GameObject spikeLeft = CreateChildVisual(enemyObject.transform, "SpikeLeft", new Vector2(-0.24f, 0.33f), new Vector2(0.12f, 0.2f), new Color(0.88f, 0.72f, 0.46f, 1f), 10);
-        spikeLeft.transform.localRotation = Quaternion.Euler(0f, 0f, 24f);
-
-        GameObject spikeRight = CreateChildVisual(enemyObject.transform, "SpikeRight", new Vector2(0.22f, 0.33f), new Vector2(0.12f, 0.2f), new Color(0.88f, 0.72f, 0.46f, 1f), 10);
-        spikeRight.transform.localRotation = Quaternion.Euler(0f, 0f, -24f);
+        CreateChildVisual(enemyObject.transform, "GroundShadow", new Vector2(0f, -0.38f), new Vector2(0.7f, 0.12f), new Color(0.11f, 0.08f, 0.06f, 0.22f), 8);
+        CreateChildVisual(enemyObject.transform, "ThreatGlow", new Vector2(0f, -0.02f), new Vector2(0.66f, 0.9f), new Color(0.16f, 0.86f, 1f, 0.08f), 9);
     }
 
     private void CreateValve(string objectName, Vector2 position, string label)

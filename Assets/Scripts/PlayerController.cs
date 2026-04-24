@@ -33,6 +33,7 @@ public class PlayerController : MonoBehaviour
     private float flashUntil;
     private float attackPoseUntil;
     private float landingPoseUntil;
+    private float hurtPoseUntil;
 
     private bool facingRight = true;
     private bool inputLocked;
@@ -42,14 +43,15 @@ public class PlayerController : MonoBehaviour
 
     private Vector3 spawnPoint;
     private Collider2D currentGroundCollider;
+    private int attackVariant;
     private int currentHealth;
 
-    private const float MoveSpeed = 8.8f;
-    private const float GroundAcceleration = 70f;
-    private const float GroundDeceleration = 86f;
-    private const float AirAcceleration = 44f;
-    private const float AirDeceleration = 32f;
-    private const float JumpForce = 15.25f;
+    private const float MoveSpeed = 8.45f;
+    private const float GroundAcceleration = 58f;
+    private const float GroundDeceleration = 66f;
+    private const float AirAcceleration = 36f;
+    private const float AirDeceleration = 20f;
+    private const float JumpForce = 15.4f;
     private const float FallMultiplier = 3.1f;
     private const float LowJumpMultiplier = 2.2f;
     private const float CoyoteTime = 0.13f;
@@ -58,14 +60,21 @@ public class PlayerController : MonoBehaviour
     private const float DropThroughDuration = 0.3f;
     private const float DropThroughVelocity = 2.6f;
     private const float OneWayGroundTolerance = 0.16f;
-    private const float AttackCooldown = 0.23f;
-    private const int AttackDamage = 1;
-    private const float AttackForce = 13f;
-    private const float AttackLungeSpeed = 2.7f;
-    private const float AttackLift = 1.15f;
+    private const float AttackCooldown = 0.28f;
+    private const int AttackDamage = 2;
+    private const float AttackForce = 20f;
+    private const float AttackLungeSpeed = 0.45f;
+    private const float AttackLift = 0.2f;
+    private const float AttackHitRadius = 0.58f;
     private const int MaxHealthValue = 3;
-    private static readonly Vector2 AttackSize = new(2.25f, 1.4f);
-    private static readonly Vector2 AttackOffset = new(1.2f, 0.2f);
+    private static readonly Vector2 AttackSize = new(3.2f, 0.9f);
+    private static readonly Vector2 AttackOffset = new(0.72f, 0.2f);
+    private static readonly Vector2[] AttackHitOffsets =
+    {
+        new(1.05f, 0.08f),
+        new(1.85f, 0.2f),
+        new(2.7f, 0.28f)
+    };
     private static readonly Color DefaultColor = Color.white;
     private static readonly Color HurtColor = new(1f, 0.42f, 0.38f, 1f);
 
@@ -74,8 +83,10 @@ public class PlayerController : MonoBehaviour
     public bool FacingRight => facingRight;
     public bool IsGrounded => isGrounded;
     public bool IsAttacking => Time.time < attackPoseUntil;
+    public bool IsHurt => Time.time < hurtPoseUntil;
     public Vector2 Velocity => body != null ? body.linearVelocity : Vector2.zero;
     public float MoveAxis => moveInput;
+    public int AttackVariant => attackVariant;
 
     public void Configure(InputActionAsset actionsAsset, LayerMask groundLayerMask, LayerMask burstLayerMask, GameStateController controller, Vector3 initialSpawnPoint)
     {
@@ -111,6 +122,7 @@ public class PlayerController : MonoBehaviour
         flashUntil = 0f;
         attackPoseUntil = 0f;
         landingPoseUntil = 0f;
+        hurtPoseUntil = 0f;
     }
 
     public void TeleportToSpawn()
@@ -145,6 +157,7 @@ public class PlayerController : MonoBehaviour
         invulnerableUntil = Time.time + 1f;
         flashUntil = Time.time + 0.15f;
         attackPoseUntil = 0f;
+        hurtPoseUntil = Time.time + 0.22f;
 
         float direction = Mathf.Sign(transform.position.x - sourcePosition.x);
         if (direction == 0f)
@@ -164,6 +177,7 @@ public class PlayerController : MonoBehaviour
         body.gravityScale = 3f;
         body.freezeRotation = true;
         body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+        body.interpolation = RigidbodyInterpolation2D.Interpolate;
 
         capsule.size = new Vector2(0.95f, 1.8f);
         spriteRenderer.sprite = PrimitiveSpriteLibrary.SquareSprite;
@@ -397,7 +411,8 @@ public class PlayerController : MonoBehaviour
         }
 
         nextAttackTime = Time.time + AttackCooldown;
-        attackPoseUntil = Time.time + 0.12f;
+        attackPoseUntil = Time.time + 0.18f;
+        attackVariant = (attackVariant + 1) % 2;
 
         float direction = facingRight ? 1f : -1f;
         float burstVerticalLift = isGrounded ? AttackLift : 0f;
@@ -409,29 +424,33 @@ public class PlayerController : MonoBehaviour
         body.linearVelocity = new Vector2(burstHorizontalVelocity, Mathf.Max(body.linearVelocity.y, burstVerticalLift));
 
         Vector2 burstOrigin = (Vector2)transform.position + new Vector2(direction * AttackOffset.x, AttackOffset.y);
-        Collider2D[] hits = Physics2D.OverlapBoxAll(burstOrigin, AttackSize, 0f, burstMask);
-
         hitThisBurst.Clear();
 
         bool hitSomething = false;
         WaterBurstData burst = new(burstOrigin, new Vector2(direction, 0f), AttackDamage, AttackForce, gameObject);
-        foreach (Collider2D hit in hits)
+        foreach (Vector2 hitOffset in AttackHitOffsets)
         {
-            GameObject targetObject = hit.attachedRigidbody != null ? hit.attachedRigidbody.gameObject : hit.gameObject;
-            int instanceId = targetObject.GetHashCode();
-            if (!hitThisBurst.Add(instanceId))
-            {
-                continue;
-            }
+            Vector2 hitCenter = (Vector2)transform.position + new Vector2(direction * hitOffset.x, hitOffset.y);
+            Collider2D[] hits = Physics2D.OverlapCircleAll(hitCenter, AttackHitRadius, burstMask);
 
-            MonoBehaviour[] behaviours = targetObject.GetComponents<MonoBehaviour>();
-            foreach (MonoBehaviour behaviour in behaviours)
+            foreach (Collider2D hit in hits)
             {
-                if (behaviour is IWaterReactive reactive)
+                GameObject targetObject = hit.attachedRigidbody != null ? hit.attachedRigidbody.gameObject : hit.gameObject;
+                int instanceId = targetObject.GetHashCode();
+                if (!hitThisBurst.Add(instanceId))
                 {
-                    reactive.ReactToWaterBurst(burst);
-                    hitSomething = true;
-                    break;
+                    continue;
+                }
+
+                MonoBehaviour[] behaviours = targetObject.GetComponents<MonoBehaviour>();
+                foreach (MonoBehaviour behaviour in behaviours)
+                {
+                    if (behaviour is IWaterReactive reactive)
+                    {
+                        reactive.ReactToWaterBurst(burst);
+                        hitSomething = true;
+                        break;
+                    }
                 }
             }
         }
