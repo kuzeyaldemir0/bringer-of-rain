@@ -67,6 +67,12 @@ public class BossController : MonoBehaviour, IWaterReactive
 
     public int CurrentHealth => currentHealth;
     public int MaxHealth => MaxHealthValue;
+    public bool IsExposed => state == AttackState.Exposed;
+    public bool IsSlamming => state == AttackState.Slamming;
+    public bool IsDashing => state == AttackState.Dashing;
+    public bool IsTelegraphing => state == AttackState.SlamWindup || state == AttackState.DashWindup;
+    public bool IsDefeated => phase == Phase.Defeated;
+    public bool IsPhaseTwo => phase == Phase.Two;
 
     public void Configure(GameStateController controller, Transform spawnRoot, float leftBound, float rightBound, float groundY)
     {

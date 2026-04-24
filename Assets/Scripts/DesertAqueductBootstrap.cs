@@ -251,6 +251,7 @@ public class DesertAqueductBootstrap : MonoBehaviour
         Color courtAccent = new(0.92f, 0.36f, 0.42f, 0.85f);
 
         CreateVisual("CourtBackdrop", new Vector2(arenaCenterX, -0.6f), new Vector2(24f, 11f), courtBackdrop, false, -16);
+        AddKenneyBackdrop("CourtAtmosphere", new Vector2(arenaCenterX, 0.4f), 24f, -15, 0.22f);
         CreateVisual("CourtMistA", new Vector2(arenaCenterX - 4f, 1.4f), new Vector2(14f, 2.4f), courtMist, false, -14);
         CreateVisual("CourtMistB", new Vector2(arenaCenterX + 5f, 2.2f), new Vector2(12f, 1.8f), courtMist, false, -14);
         CreateVisual("CourtAccent", new Vector2(arenaCenterX, 3.4f), new Vector2(20f, 0.18f), courtAccent, false, -12);
@@ -292,10 +293,56 @@ public class DesertAqueductBootstrap : MonoBehaviour
 
         BossController boss = bossObject.AddComponent<BossController>();
         boss.Configure(gameState, worldRoot, leftBound, rightBound, groundY);
+        bossObject.AddComponent<BossSpriteAnimator>();
 
         CreateChildVisual(bossObject.transform, "BossShadow", new Vector2(0f, -0.62f), new Vector2(0.92f, 0.16f), new Color(0.05f, 0.02f, 0.08f, 0.55f), 8);
-        CreateChildVisual(bossObject.transform, "BossCrest", new Vector2(0f, 0.42f), new Vector2(0.55f, 0.16f), new Color(1f, 0.84f, 0.32f, 0.95f), 12);
-        CreateChildVisual(bossObject.transform, "BossEye", new Vector2(0f, 0.08f), new Vector2(0.18f, 0.18f), new Color(1f, 0.42f, 0.32f, 0.95f), 13);
+        CreateChildVisual(bossObject.transform, "BossCrest", new Vector2(0f, 0.62f), new Vector2(0.42f, 0.12f), new Color(1f, 0.84f, 0.32f, 0.95f), 12);
+    }
+
+    private static Sprite kenneyBackgroundSprite;
+
+    private static Sprite GetKenneyBackgroundSprite()
+    {
+        if (kenneyBackgroundSprite != null)
+        {
+            return kenneyBackgroundSprite;
+        }
+
+        Texture2D texture = Resources.Load<Texture2D>("Kenney/Backgrounds");
+        if (texture == null)
+        {
+            return null;
+        }
+
+        texture.filterMode = FilterMode.Point;
+        kenneyBackgroundSprite = Sprite.Create(
+            texture,
+            new Rect(0f, 0f, texture.width, texture.height),
+            new Vector2(0.5f, 0.5f),
+            16f);
+        return kenneyBackgroundSprite;
+    }
+
+    private void AddKenneyBackdrop(string objectName, Vector2 position, float targetWidth, int sortingOrder, float alpha)
+    {
+        Sprite sprite = GetKenneyBackgroundSprite();
+        if (sprite == null)
+        {
+            return;
+        }
+
+        GameObject backdrop = new(objectName);
+        backdrop.transform.SetParent(worldRoot, false);
+        backdrop.transform.position = new Vector3(position.x, position.y, 0f);
+
+        float spriteWidth = sprite.bounds.size.x;
+        float scale = spriteWidth > 0f ? targetWidth / spriteWidth : 1f;
+        backdrop.transform.localScale = new Vector3(scale, scale, 1f);
+
+        SpriteRenderer renderer = backdrop.AddComponent<SpriteRenderer>();
+        renderer.sprite = sprite;
+        renderer.color = new Color(1f, 1f, 1f, alpha);
+        renderer.sortingOrder = sortingOrder;
     }
 
     private PlayerController BuildPlayer(Vector3 spawnPoint)
