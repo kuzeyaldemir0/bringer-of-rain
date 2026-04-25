@@ -7,9 +7,10 @@ public class BossSpriteAnimator : MonoBehaviour
 {
     private static readonly Dictionary<string, Sprite[]> CachedAnimations = new();
 
-    private const string ResourceFolder = "Enemies/NinjaFrog";
-    private const int CellSize = 32;
-    private const float PixelsPerUnit = 24f;
+    private const string ResourceFolder = "Bosses/CaptainClownNose";
+    private const int CellWidth = 64;
+    private const int CellHeight = 40;
+    private const float PixelsPerUnit = 22f;
 
     private BossController boss;
     private SpriteRenderer spriteRenderer;
@@ -58,14 +59,24 @@ public class BossSpriteAnimator : MonoBehaviour
             return "Hit";
         }
 
+        if (boss.IsSlamming)
+        {
+            return "Ground";
+        }
+
         if (boss.IsExposed)
         {
             return "Hit";
         }
 
-        if (boss.IsSlamming || boss.IsDashing)
+        if (boss.IsDashing)
         {
             return "Run";
+        }
+
+        if (boss.IsTelegraphing)
+        {
+            return "Attack";
         }
 
         return "Idle";
@@ -82,9 +93,11 @@ public class BossSpriteAnimator : MonoBehaviour
         activeFrames = LoadFrames(clipName);
         frameDuration = clipName switch
         {
-            "Hit" => 0.07f,
+            "Hit" => 0.06f,
+            "Ground" => 0.07f,
             "Run" => boss.IsDashing ? 0.05f : 0.07f,
-            _ => boss.IsTelegraphing ? 0.1f : 0.16f
+            "Attack" => 0.08f,
+            _ => 0.16f
         };
 
         frameIndex = 0;
@@ -113,11 +126,11 @@ public class BossSpriteAnimator : MonoBehaviour
         }
 
         texture.filterMode = FilterMode.Point;
-        int frameCount = Mathf.Max(1, texture.width / CellSize);
+        int frameCount = Mathf.Max(1, texture.width / CellWidth);
         Sprite[] frames = new Sprite[frameCount];
         for (int i = 0; i < frameCount; i++)
         {
-            Rect rect = new(i * CellSize, 0f, CellSize, CellSize);
+            Rect rect = new(i * CellWidth, 0f, CellWidth, CellHeight);
             Sprite sprite = Sprite.Create(texture, rect, new Vector2(0.5f, 0.5f), PixelsPerUnit);
             sprite.name = $"Boss_{clipName}_{i}";
             frames[i] = sprite;

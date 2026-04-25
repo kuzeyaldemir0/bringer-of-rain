@@ -38,6 +38,7 @@ public class CheckpointTrigger : MonoBehaviour
         if (!activated && beaconRenderer != null)
         {
             activated = true;
+            GameAudioController.Play(AudioCue.Checkpoint);
             beaconRenderer.color = ActiveColor;
         }
     }

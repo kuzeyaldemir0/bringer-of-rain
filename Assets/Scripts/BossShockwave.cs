@@ -31,6 +31,7 @@ public class BossShockwave : MonoBehaviour
         wave.waveRenderer = renderer;
         wave.bornAt = Time.time;
         wave.horizontalSign = direction >= 0f ? 1f : -1f;
+        GameAudioController.Play(AudioCue.BossShockwave);
     }
 
     private void Update()

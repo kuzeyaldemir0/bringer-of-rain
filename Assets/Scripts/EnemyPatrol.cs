@@ -89,12 +89,14 @@ public class EnemyPatrol : MonoBehaviour, IWaterReactive
         currentHealth -= damage;
         direction = burst.Direction.x > 0f ? -1f : 1f;
         spriteRenderer.color = HurtColor;
+        GameAudioController.Play(AudioCue.EnemyHit);
 
         if (currentHealth <= 0)
         {
             knockbackVelocity = burst.Direction.x * 7f;
             currentState = EnemyState.Stunned;
             stateEndsAt = Time.time + StunDuration;
+            GameAudioController.Play(AudioCue.EnemyDefeat);
             WaterBurstVisual.Spawn(transform.position, new Vector2(1.4f, 1f), burst.Direction.x);
             SimpleCameraFollow.RequestHitstop(0.09f);
             SimpleCameraFollow.RequestShake(0.32f, 0.35f);
@@ -175,6 +177,7 @@ public class EnemyPatrol : MonoBehaviour, IWaterReactive
                 {
                     currentState = EnemyState.Dash;
                     stateEndsAt = Time.time + dashDuration;
+                    GameAudioController.Play(AudioCue.EnemyDash);
                 }
                 break;
 

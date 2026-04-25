@@ -153,6 +153,7 @@ public class GameStateController : MonoBehaviour
     {
         if (!CanExit)
         {
+            GameAudioController.Play(AudioCue.ExitBlocked);
             ShowTransientMessage("Restore the twin valves to awaken the reservoir gate.", 2.6f);
             return;
         }
@@ -193,6 +194,7 @@ public class GameStateController : MonoBehaviour
         }
 
         storyPhase = StoryPhase.Finished;
+        GameAudioController.Play(AudioCue.Victory);
         showCenterMessage = true;
         centerMessage =
             "WARDEN BROKEN\n\n" +
@@ -257,6 +259,7 @@ public class GameStateController : MonoBehaviour
         }
 
         CanExit = true;
+        GameAudioController.Play(AudioCue.GateUnlocked);
 
         if (gateBarrier != null)
         {
@@ -299,6 +302,7 @@ public class GameStateController : MonoBehaviour
         objectiveText = "Objective: Enter the flooded vault.";
         hintText = "Transitioning to Chapter II...";
         transitionTeleportAt = Time.unscaledTime + 0.55f;
+        GameAudioController.Play(AudioCue.ChapterTransition);
 
         if (player != null)
         {
@@ -359,6 +363,7 @@ public class GameStateController : MonoBehaviour
         objectiveText = "Objective: Break the warden of the drowned vault.";
         hintText = "Approaching the warden's court...";
         transitionTeleportAt = Time.unscaledTime + 0.55f;
+        GameAudioController.Play(AudioCue.ChapterTransition);
 
         if (player != null)
         {

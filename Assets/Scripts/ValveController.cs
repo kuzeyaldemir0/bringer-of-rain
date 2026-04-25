@@ -34,6 +34,7 @@ public class ValveController : MonoBehaviour, IWaterReactive
 
         activated = true;
         spriteRenderer.color = ActiveColor;
+        GameAudioController.Play(AudioCue.ValveActivated);
 
         if (glowRenderer != null)
         {

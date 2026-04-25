@@ -34,7 +34,7 @@ public class BossController : MonoBehaviour, IWaterReactive
     private const float ActionGapPhase2 = 0.85f;
     private const float SummonInterval = 8f;
 
-    private static readonly Color IdleColor = new(0.78f, 0.42f, 0.24f, 1f);
+    private static readonly Color IdleColor = new(1f, 1f, 1f, 1f);
     private static readonly Color WindupColor = new(1f, 0.94f, 0.32f, 1f);
     private static readonly Color SlamColor = new(1f, 0.55f, 0.32f, 1f);
     private static readonly Color ExposedColor = new(0.62f, 1f, 0.96f, 1f);
@@ -81,8 +81,9 @@ public class BossController : MonoBehaviour, IWaterReactive
         arenaLeftBound = leftBound;
         arenaRightBound = rightBound;
         floorY = groundY;
-        idleY = groundY + 2.0f;
-        slamLandY = groundY + 1.5f;
+
+        idleY = groundY + 1.6f;
+        slamLandY = groundY + 0.95f;
 
         Vector3 position = transform.position;
         position.y = idleY;
@@ -117,10 +118,12 @@ public class BossController : MonoBehaviour, IWaterReactive
         if (state != AttackState.Exposed)
         {
             spriteRenderer.color = HurtColor;
+            GameAudioController.Play(AudioCue.BossHit);
             return;
         }
 
         currentHealth -= burst.Damage;
+        GameAudioController.Play(AudioCue.BossHit);
         SimpleCameraFollow.RequestHitstop(0.07f);
         SimpleCameraFollow.RequestShake(0.22f, 0.28f);
         WaterBurstVisual.Spawn(transform.position, new Vector2(1.1f, 0.85f), burst.Direction.x);
@@ -148,7 +151,7 @@ public class BossController : MonoBehaviour, IWaterReactive
         body.freezeRotation = true;
         body.interpolation = RigidbodyInterpolation2D.Interpolate;
 
-        bodyCollider.size = new Vector2(0.85f, 1.2f);
+        bodyCollider.size = new Vector2(1.4f, 1.4f);
 
         spriteRenderer.sprite = PrimitiveSpriteLibrary.SquareSprite;
         spriteRenderer.color = IdleColor;
@@ -258,12 +261,14 @@ public class BossController : MonoBehaviour, IWaterReactive
             Vector3 position = transform.position;
             position.y = idleY;
             transform.position = position;
+            GameAudioController.Play(AudioCue.BossWindup);
         }
         else
         {
             state = AttackState.SlamWindup;
             float windup = phase == Phase.Two ? SlamWindupDuration * 0.78f : SlamWindupDuration;
             stateEndsAt = Time.time + windup;
+            GameAudioController.Play(AudioCue.BossWindup);
         }
     }
 
@@ -287,6 +292,7 @@ public class BossController : MonoBehaviour, IWaterReactive
 
         if (Mathf.Abs(position.y - slamLandY) <= 0.001f)
         {
+            GameAudioController.Play(AudioCue.BossSlam);
             BossShockwave.Spawn(new Vector2(transform.position.x, floorY + 0.4f), 1f);
             BossShockwave.Spawn(new Vector2(transform.position.x, floorY + 0.4f), -1f);
             SimpleCameraFollow.RequestShake(0.4f, 0.45f);
@@ -347,6 +353,7 @@ public class BossController : MonoBehaviour, IWaterReactive
     private void EnterPhaseTwo()
     {
         phase = Phase.Two;
+        GameAudioController.Play(AudioCue.BossPhaseTwo);
         SimpleCameraFollow.RequestShake(0.5f, 0.6f);
         SimpleCameraFollow.RequestHitstop(0.12f);
         WaterBurstVisual.Spawn(transform.position, new Vector2(2.2f, 1.6f), 1f);
@@ -384,6 +391,7 @@ public class BossController : MonoBehaviour, IWaterReactive
     private void DefeatBoss()
     {
         phase = Phase.Defeated;
+        GameAudioController.Play(AudioCue.BossDefeated);
         SimpleCameraFollow.RequestHitstop(0.2f);
         SimpleCameraFollow.RequestShake(0.7f, 0.95f);
         WaterBurstVisual.Spawn(transform.position, new Vector2(2.6f, 1.8f), 1f);

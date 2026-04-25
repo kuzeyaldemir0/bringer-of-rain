@@ -35,6 +35,7 @@ public class PlayerController : MonoBehaviour
     private float attackPoseUntil;
     private float landingPoseUntil;
     private float hurtPoseUntil;
+    private float nextFootstepAt;
 
     private bool facingRight = true;
     private bool inputLocked;
@@ -151,6 +152,7 @@ public class PlayerController : MonoBehaviour
 
     public void ForceRespawn()
     {
+        GameAudioController.Play(AudioCue.PlayerRespawn);
         gameState?.RespawnPlayer(this);
     }
 
@@ -169,6 +171,8 @@ public class PlayerController : MonoBehaviour
             ForceRespawn();
             return;
         }
+
+        GameAudioController.Play(AudioCue.PlayerHurt);
 
         invulnerableUntil = Time.time + 1f;
         flashUntil = Time.time + 0.15f;
@@ -250,6 +254,7 @@ public class PlayerController : MonoBehaviour
 
         ReleaseExpiredOneWayPlatformIgnores();
 
+        float verticalVelocityBeforeGroundCheck = body.linearVelocity.y;
         RaycastHit2D groundHit = GetGroundHit();
         currentGroundCollider = groundHit.collider;
         isGrounded = currentGroundCollider != null;
@@ -257,9 +262,10 @@ public class PlayerController : MonoBehaviour
         {
             coyoteCounter = CoyoteTime;
 
-            if (!wasGrounded && body.linearVelocity.y < -7f)
+            if (!wasGrounded && verticalVelocityBeforeGroundCheck < -7f)
             {
                 landingPoseUntil = Time.time + 0.08f;
+                GameAudioController.Play(AudioCue.PlayerLand);
             }
         }
         else
@@ -302,8 +308,10 @@ public class PlayerController : MonoBehaviour
             jumpBufferCounter = 0f;
             coyoteCounter = 0f;
             landingPoseUntil = 0f;
+            GameAudioController.Play(AudioCue.PlayerJump);
         }
 
+        HandleFootstepAudio();
         HandleFlip();
         HandleFallState();
         UpdateVisualState();
@@ -444,6 +452,7 @@ public class PlayerController : MonoBehaviour
         attackPoseUntil = Time.time + 0.42f;
         attackVariant = (attackVariant + 1) % 2;
         attackSequence++;
+        GameAudioController.Play(AudioCue.PlayerBurst);
 
         float direction = facingRight ? 1f : -1f;
         float burstVerticalLift = isGrounded ? AttackLift : 0f;
@@ -493,11 +502,23 @@ public class PlayerController : MonoBehaviour
 
         if (hitSomething)
         {
+            GameAudioController.Play(AudioCue.BurstHit);
             SimpleCameraFollow.RequestHitstop(0.05f);
             SimpleCameraFollow.RequestShake(0.18f, 0.22f);
         }
 
         WaterBurstVisual.Spawn(burstOrigin, AttackSize, direction);
+    }
+
+    private void HandleFootstepAudio()
+    {
+        if (!isGrounded || inputLocked || Mathf.Abs(body.linearVelocity.x) < 1.2f || Time.time < nextFootstepAt)
+        {
+            return;
+        }
+
+        nextFootstepAt = Time.time + 0.32f;
+        GameAudioController.PlayRandom(AudioCue.PlayerStep);
     }
 
     private void HandleFlip()
