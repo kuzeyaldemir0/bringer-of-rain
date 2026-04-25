@@ -33,6 +33,7 @@ public class PlayerController : MonoBehaviour
     private float invulnerableUntil;
     private float flashUntil;
     private float attackPoseUntil;
+    private float downAttackPoseUntil;
     private float landingPoseUntil;
     private float hurtPoseUntil;
     private float nextFootstepAt;
@@ -71,13 +72,23 @@ public class PlayerController : MonoBehaviour
     private const float AttackLift = 0.2f;
     private const float AttackHitRadius = 0.58f;
     private const int MaxHealthValue = 3;
+    private const float DownAttackBounceForce = 14f;
+    private const float DownAttackDownwardBoost = -6f;
+    private const float DownAttackHitRadius = 0.72f;
     private static readonly Vector2 AttackSize = new(3.2f, 0.9f);
+    private static readonly Vector2 DownAttackSize = new(1.2f, 2.4f);
     private static readonly Vector2 AttackOffset = new(0.72f, 0.2f);
     private static readonly Vector2[] AttackHitOffsets =
     {
         new(1.05f, 0.08f),
         new(1.85f, 0.2f),
         new(2.7f, 0.28f)
+    };
+    private static readonly Vector2[] DownAttackHitOffsets =
+    {
+        new(0f, -0.7f),
+        new(0f, -1.35f),
+        new(0f, -2.0f)
     };
     private static readonly Color DefaultColor = Color.white;
     private static readonly Color HurtColor = new(1f, 0.42f, 0.38f, 1f);
@@ -87,6 +98,7 @@ public class PlayerController : MonoBehaviour
     public bool FacingRight => facingRight;
     public bool IsGrounded => isGrounded;
     public bool IsAttacking => Time.time < attackPoseUntil;
+    public bool IsDownAttacking => Time.time < downAttackPoseUntil;
     public bool IsHurt => Time.time < hurtPoseUntil;
     public Vector2 Velocity => body != null ? body.linearVelocity : Vector2.zero;
     public float MoveAxis => moveInput;
@@ -138,6 +150,7 @@ public class PlayerController : MonoBehaviour
         invulnerableUntil = Time.time + 0.85f;
         flashUntil = 0f;
         attackPoseUntil = 0f;
+        downAttackPoseUntil = 0f;
         landingPoseUntil = 0f;
         hurtPoseUntil = 0f;
     }
@@ -448,6 +461,13 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
+        // Downward attack: airborne + holding down + attack
+        if (!isGrounded && moveVerticalInput < -0.5f)
+        {
+            HandleDownAttack();
+            return;
+        }
+
         nextAttackTime = Time.time + AttackCooldown;
         attackPoseUntil = Time.time + 0.42f;
         attackVariant = (attackVariant + 1) % 2;
@@ -521,6 +541,61 @@ public class PlayerController : MonoBehaviour
         GameAudioController.PlayRandom(AudioCue.PlayerStep);
     }
 
+    private void HandleDownAttack()
+    {
+        nextAttackTime = Time.time + AttackCooldown;
+        attackPoseUntil = Time.time + 0.42f;
+        downAttackPoseUntil = Time.time + 0.42f;
+        attackSequence++;
+
+        body.linearVelocity = new Vector2(body.linearVelocity.x, Mathf.Min(body.linearVelocity.y, DownAttackDownwardBoost));
+
+        Vector2 burstOrigin = (Vector2)transform.position + new Vector2(0f, -0.9f);
+        hitThisBurst.Clear();
+
+        bool hitSomething = false;
+        float direction = facingRight ? 1f : -1f;
+        WaterBurstData burst = new(burstOrigin, Vector2.down, AttackDamage, AttackForce, gameObject);
+
+        foreach (Vector2 hitOffset in DownAttackHitOffsets)
+        {
+            Vector2 hitCenter = (Vector2)transform.position + hitOffset;
+            Collider2D[] hits = Physics2D.OverlapCircleAll(hitCenter, DownAttackHitRadius, burstMask);
+
+            foreach (Collider2D hit in hits)
+            {
+                GameObject targetObject = hit.attachedRigidbody != null ? hit.attachedRigidbody.gameObject : hit.gameObject;
+                int instanceId = targetObject.GetHashCode();
+                if (!hitThisBurst.Add(instanceId))
+                {
+                    continue;
+                }
+
+                MonoBehaviour[] behaviours = targetObject.GetComponents<MonoBehaviour>();
+                foreach (MonoBehaviour behaviour in behaviours)
+                {
+                    if (behaviour is IWaterReactive reactive)
+                    {
+                        reactive.ReactToWaterBurst(burst);
+                        hitSomething = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (hitSomething)
+        {
+            body.linearVelocity = new Vector2(body.linearVelocity.x, DownAttackBounceForce);
+            coyoteCounter = CoyoteTime;
+            GameAudioController.Play(AudioCue.BurstHit);
+            SimpleCameraFollow.RequestHitstop(0.05f);
+            SimpleCameraFollow.RequestShake(0.18f, 0.22f);
+        }
+
+        WaterBurstVisual.Spawn(burstOrigin, DownAttackSize, direction);
+    }
+
     private void HandleFlip()
     {
         if (moveInput > 0.01f)
@@ -564,6 +639,12 @@ public class PlayerController : MonoBehaviour
         {
             targetScale.x = 0.92f;
             targetScale.y = 1.08f;
+
+            if (Time.time < downAttackPoseUntil)
+            {
+                targetScale.x = 1.15f;
+                targetScale.y = 0.88f;
+            }
         }
         else
         {

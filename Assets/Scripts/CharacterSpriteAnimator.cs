@@ -65,6 +65,15 @@ public class CharacterSpriteAnimator : MonoBehaviour
         new(2, 6)
     };
 
+    private static readonly Vector2Int[] DownAttackFrames =
+    {
+        new(1, 8),
+        new(4, 8),
+        new(5, 8),
+        new(6, 8),
+        new(7, 8)
+    };
+
     private static readonly Dictionary<Vector2Int, Sprite> CachedSprites = new();
     private static Texture2D cachedTexture;
 
@@ -88,6 +97,7 @@ public class CharacterSpriteAnimator : MonoBehaviour
         Jump,
         Fall,
         Attack,
+        DownAttack,
         Hurt
     }
 
@@ -143,6 +153,11 @@ public class CharacterSpriteAnimator : MonoBehaviour
 
     private AnimationState ResolveState()
     {
+        if (player.IsDownAttacking)
+        {
+            return AnimationState.DownAttack;
+        }
+
         if (player.IsAttacking)
         {
             return AnimationState.Attack;
@@ -176,6 +191,7 @@ public class CharacterSpriteAnimator : MonoBehaviour
             AnimationState.Jump => JumpFrames,
             AnimationState.Fall => FallFrames,
             AnimationState.Attack => player.AttackVariant == 0 ? AttackFrames : AttackFramesAlt,
+            AnimationState.DownAttack => DownAttackFrames,
             AnimationState.Hurt => HurtFrames,
             _ => IdleFrames
         };
@@ -184,6 +200,7 @@ public class CharacterSpriteAnimator : MonoBehaviour
         {
             AnimationState.Run => 0.08f,
             AnimationState.Attack => 0.045f,
+            AnimationState.DownAttack => 0.055f,
             AnimationState.Hurt => 0.07f,
             AnimationState.Jump => 0.13f,
             AnimationState.Fall => 0.13f,
