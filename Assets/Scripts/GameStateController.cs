@@ -15,7 +15,7 @@ public class GameStateController : MonoBehaviour
 
     private readonly List<GameObject> restoreObjects = new();
     private static readonly Color UiTextColor = new(0.09f, 0.11f, 0.13f, 1f);
-    private const string DefaultHintText = "Move A/D or Arrows   Jump Space   Burst F / Mouse 1 / Enter   Follow the cracked spillway right";
+    private const string DefaultHintText = "Move A/D or Arrows   Jump Space   Burst F / Mouse 1 / Enter   Ice Spear hold/release Mouse 2";
 
     private PlayerController player;
     private string healthText = "HP 3/3";

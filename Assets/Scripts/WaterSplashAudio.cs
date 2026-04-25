@@ -8,10 +8,14 @@ public static class WaterSplashAudio
 {
     private static AudioClip whipClip;
     private static AudioClip splashClip;
+    private static AudioClip iceSpearThrowClip;
+    private static AudioClip iceShatterClip;
 
     private const int SampleRate = 44100;
     private const float WhipDuration = 0.18f;
     private const float SplashDuration = 0.22f;
+    private const float IceSpearThrowDuration = 0.2f;
+    private const float IceShatterDuration = 0.24f;
     private const float MasterVolume = 0.35f;
 
     /// <summary>
@@ -38,6 +42,26 @@ public static class WaterSplashAudio
         }
 
         AudioSource.PlayClipAtPoint(splashClip, position, MasterVolume);
+    }
+
+    public static void PlayIceSpearThrow(Vector3 position)
+    {
+        if (iceSpearThrowClip == null)
+        {
+            iceSpearThrowClip = GenerateIceSpearThrowClip();
+        }
+
+        AudioSource.PlayClipAtPoint(iceSpearThrowClip, position, MasterVolume * 0.9f);
+    }
+
+    public static void PlayIceShatter(Vector3 position)
+    {
+        if (iceShatterClip == null)
+        {
+            iceShatterClip = GenerateIceShatterClip();
+        }
+
+        AudioSource.PlayClipAtPoint(iceShatterClip, position, MasterVolume * 0.72f);
     }
 
     private static AudioClip GenerateWhipClip()
@@ -115,6 +139,63 @@ public static class WaterSplashAudio
         }
 
         AudioClip clip = AudioClip.Create("WaterSplash", sampleCount, 1, SampleRate, false);
+        clip.SetData(samples, 0);
+        return clip;
+    }
+
+    private static AudioClip GenerateIceSpearThrowClip()
+    {
+        int sampleCount = Mathf.CeilToInt(SampleRate * IceSpearThrowDuration);
+        float[] samples = new float[sampleCount];
+
+        for (int i = 0; i < sampleCount; i++)
+        {
+            float t = (float)i / sampleCount;
+            float envelope = Mathf.Pow(1f - t, 1.35f);
+            float sweepFrequency = Mathf.Lerp(620f, 2600f, t);
+            float glassFrequency = Mathf.Lerp(1800f, 3200f, t);
+            float sweep = Mathf.Sin(2f * Mathf.PI * sweepFrequency * i / SampleRate) * 0.36f;
+            float glass = Mathf.Sin(2f * Mathf.PI * glassFrequency * i / SampleRate) * 0.18f;
+            float air = (Random.value * 2f - 1f) * 0.22f * (1f - t);
+            float raw = (sweep + glass + air) * envelope;
+
+            if (i > 0)
+            {
+                raw = samples[i - 1] * 0.18f + raw * 0.82f;
+            }
+
+            samples[i] = Mathf.Clamp(raw, -1f, 1f);
+        }
+
+        AudioClip clip = AudioClip.Create("IceSpearThrow", sampleCount, 1, SampleRate, false);
+        clip.SetData(samples, 0);
+        return clip;
+    }
+
+    private static AudioClip GenerateIceShatterClip()
+    {
+        int sampleCount = Mathf.CeilToInt(SampleRate * IceShatterDuration);
+        float[] samples = new float[sampleCount];
+
+        for (int i = 0; i < sampleCount; i++)
+        {
+            float t = (float)i / sampleCount;
+            float envelope = Mathf.Pow(1f - t, 2.2f);
+            float crack = (Random.value * 2f - 1f) * envelope * 0.55f;
+            float bellA = Mathf.Sin(2f * Mathf.PI * 2300f * i / SampleRate) * Mathf.Exp(-t * 10f) * 0.18f;
+            float bellB = Mathf.Sin(2f * Mathf.PI * 3450f * i / SampleRate) * Mathf.Exp(-t * 15f) * 0.14f;
+            float tick = t < 0.04f ? Mathf.Sin(2f * Mathf.PI * 5200f * i / SampleRate) * (1f - t / 0.04f) * 0.24f : 0f;
+            float raw = crack + bellA + bellB + tick;
+
+            if (i > 0)
+            {
+                raw = samples[i - 1] * 0.1f + raw * 0.9f;
+            }
+
+            samples[i] = Mathf.Clamp(raw, -1f, 1f);
+        }
+
+        AudioClip clip = AudioClip.Create("IceSpearShatter", sampleCount, 1, SampleRate, false);
         clip.SetData(samples, 0);
         return clip;
     }

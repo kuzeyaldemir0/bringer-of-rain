@@ -15,12 +15,18 @@ public class PlayerController : MonoBehaviour
     private InputAction moveAction;
     private InputAction jumpAction;
     private InputAction attackAction;
+    private InputAction spearAction;
 
     private GameStateController gameState;
     private Rigidbody2D body;
     private CapsuleCollider2D capsule;
     private SpriteRenderer spriteRenderer;
     private SpriteRenderer[] visualRenderers;
+    private GameObject spearAimGuide;
+    private Transform spearAimLine;
+    private SpriteRenderer spearAimLineRenderer;
+    private Transform spearAimReticle;
+    private SpriteRenderer spearAimReticleRenderer;
 
     private LayerMask groundMask;
     private LayerMask burstMask;
@@ -37,18 +43,24 @@ public class PlayerController : MonoBehaviour
     private float landingPoseUntil;
     private float hurtPoseUntil;
     private float nextFootstepAt;
+    private float nextSpearTime;
+    private float timeScaleBeforeSpearAim = 1f;
+    private float fixedDeltaTimeBeforeSpearAim = 0.02f;
 
     private bool facingRight = true;
     private bool inputLocked;
     private bool isGrounded;
     private bool dropInputHeld;
     private bool wasGrounded;
+    private bool isSpearAiming;
+    private bool spearSlowMotionApplied;
 
     private Vector3 spawnPoint;
     private Collider2D currentGroundCollider;
     private int attackVariant;
     private int attackSequence;
     private int currentHealth;
+    private Vector2 currentSpearAimDirection = Vector2.right;
 
     private const float MoveSpeed = 8.45f;
     private const float GroundAcceleration = 58f;
@@ -75,6 +87,16 @@ public class PlayerController : MonoBehaviour
     private const float DownAttackBounceForce = 14f;
     private const float DownAttackDownwardBoost = -6f;
     private const float DownAttackHitRadius = 0.72f;
+    private const float SpearCooldown = 0.9f;
+    private const int SpearDamage = 3;
+    private const float SpearForce = 20f;
+    private const float SpearSpeed = 20f;
+    private const float SpearMaxRange = 18f;
+    private const float SpearAimTimeScale = 0.35f;
+    private const float SpearAimGuideLength = 5.4f;
+    private const float SpearAimMinDistance = 0.24f;
+    private const float SpearOriginVerticalOffset = 0.24f;
+    private const float SpearSpawnForwardOffset = 0.72f;
     private static readonly Vector2 AttackSize = new(3.2f, 0.9f);
     private static readonly Vector2 DownAttackSize = new(1.2f, 2.4f);
     private static readonly Vector2 AttackOffset = new(0.72f, 0.2f);
@@ -92,12 +114,13 @@ public class PlayerController : MonoBehaviour
     };
     private static readonly Color DefaultColor = Color.white;
     private static readonly Color HurtColor = new(1f, 0.42f, 0.38f, 1f);
+    private static readonly Color SpearAimColor = new(0.58f, 0.96f, 1f, 0.84f);
 
     public int CurrentHealth => currentHealth;
     public int MaxHealth => MaxHealthValue;
     public bool FacingRight => facingRight;
     public bool IsGrounded => isGrounded;
-    public bool IsAttacking => Time.time < attackPoseUntil;
+    public bool IsAttacking => isSpearAiming || Time.time < attackPoseUntil;
     public bool IsDownAttacking => Time.time < downAttackPoseUntil;
     public bool IsHurt => Time.time < hurtPoseUntil;
     public Vector2 Velocity => body != null ? body.linearVelocity : Vector2.zero;
@@ -125,6 +148,7 @@ public class PlayerController : MonoBehaviour
         moveInput = 0f;
         if (locked)
         {
+            CancelSpearAim();
             body.linearVelocity = new Vector2(0f, body.linearVelocity.y);
         }
     }
@@ -153,6 +177,7 @@ public class PlayerController : MonoBehaviour
         downAttackPoseUntil = 0f;
         landingPoseUntil = 0f;
         hurtPoseUntil = 0f;
+        CancelSpearAim();
     }
 
     public void TeleportToSpawn()
@@ -186,6 +211,8 @@ public class PlayerController : MonoBehaviour
         }
 
         GameAudioController.Play(AudioCue.PlayerHurt);
+
+        CancelSpearAim();
 
         invulnerableUntil = Time.time + 1f;
         flashUntil = Time.time + 0.15f;
@@ -236,10 +263,12 @@ public class PlayerController : MonoBehaviour
         moveAction = inputActions.FindAction("Player/Move", true);
         jumpAction = inputActions.FindAction("Player/Jump", true);
         attackAction = inputActions.FindAction("Player/Attack", true);
+        spearAction = inputActions.FindAction("Player/Spear", true);
 
         moveAction.Enable();
         jumpAction.Enable();
         attackAction.Enable();
+        spearAction.Enable();
 
         transform.position = spawnPoint;
         body.position = spawnPoint;
@@ -248,10 +277,12 @@ public class PlayerController : MonoBehaviour
 
     private void OnDisable()
     {
+        CancelSpearAim();
         RestoreIgnoredPlatformCollisions();
         moveAction?.Disable();
         jumpAction?.Disable();
         attackAction?.Disable();
+        spearAction?.Disable();
     }
 
     private void Update()
@@ -304,7 +335,27 @@ public class PlayerController : MonoBehaviour
             jumpBufferCounter -= Time.deltaTime;
         }
 
-        if (!inputLocked && attackAction.WasPressedThisFrame())
+        if (!inputLocked && spearAction.WasPressedThisFrame())
+        {
+            StartSpearAim();
+            gameState?.NotifyPlayerActivity();
+        }
+
+        if (isSpearAiming)
+        {
+            UpdateSpearAim();
+            if (!inputLocked && spearAction.WasReleasedThisFrame())
+            {
+                ThrowSpear();
+                gameState?.NotifyPlayerActivity();
+            }
+            else if (inputLocked || !spearAction.IsPressed())
+            {
+                CancelSpearAim();
+            }
+        }
+
+        if (!inputLocked && !isSpearAiming && attackAction.WasPressedThisFrame())
         {
             HandleAttack();
             gameState?.NotifyPlayerActivity();
@@ -454,6 +505,203 @@ public class PlayerController : MonoBehaviour
         expiredOneWayPlatforms.Clear();
     }
 
+    private void StartSpearAim()
+    {
+        if (isSpearAiming || Time.time < nextSpearTime)
+        {
+            return;
+        }
+
+        isSpearAiming = true;
+        currentSpearAimDirection = ResolveSpearAimDirection();
+        attackPoseUntil = Time.time + 0.18f;
+        attackSequence++;
+        ApplySpearSlowMotion();
+        UpdateSpearAimGuide();
+    }
+
+    private void UpdateSpearAim()
+    {
+        currentSpearAimDirection = ResolveSpearAimDirection();
+        if (Mathf.Abs(currentSpearAimDirection.x) > 0.1f)
+        {
+            facingRight = currentSpearAimDirection.x > 0f;
+        }
+
+        attackPoseUntil = Time.time + 0.12f;
+        ApplySpearSlowMotion();
+        UpdateSpearAimGuide();
+    }
+
+    private void ThrowSpear()
+    {
+        if (!isSpearAiming)
+        {
+            return;
+        }
+
+        Vector2 aimDirection = currentSpearAimDirection.sqrMagnitude > 0.01f
+            ? currentSpearAimDirection.normalized
+            : new Vector2(facingRight ? 1f : -1f, 0f);
+        Vector2 spearOrigin = GetSpearOrigin() + aimDirection * SpearSpawnForwardOffset;
+
+        isSpearAiming = false;
+        HideSpearAimGuide();
+        RestoreSpearSlowMotion();
+
+        nextSpearTime = Time.time + SpearCooldown;
+        attackPoseUntil = Time.time + 0.42f;
+        attackSequence++;
+
+        IceSpearProjectile.Spawn(
+            spearOrigin,
+            aimDirection,
+            SpearDamage,
+            SpearForce,
+            SpearSpeed,
+            SpearMaxRange,
+            groundMask,
+            burstMask,
+            gameObject);
+    }
+
+    private void CancelSpearAim()
+    {
+        if (!isSpearAiming && !spearSlowMotionApplied)
+        {
+            return;
+        }
+
+        isSpearAiming = false;
+        HideSpearAimGuide();
+        RestoreSpearSlowMotion();
+    }
+
+    private void ApplySpearSlowMotion()
+    {
+        if (!spearSlowMotionApplied)
+        {
+            timeScaleBeforeSpearAim = Time.timeScale;
+            fixedDeltaTimeBeforeSpearAim = Time.fixedDeltaTime;
+            spearSlowMotionApplied = true;
+        }
+
+        if (Time.timeScale <= 0f)
+        {
+            return;
+        }
+
+        float baseFixedDelta = fixedDeltaTimeBeforeSpearAim;
+        if (timeScaleBeforeSpearAim > 0.0001f)
+        {
+            baseFixedDelta = fixedDeltaTimeBeforeSpearAim / timeScaleBeforeSpearAim;
+        }
+
+        Time.timeScale = SpearAimTimeScale;
+        Time.fixedDeltaTime = baseFixedDelta * SpearAimTimeScale;
+    }
+
+    private void RestoreSpearSlowMotion()
+    {
+        if (!spearSlowMotionApplied)
+        {
+            return;
+        }
+
+        Time.timeScale = timeScaleBeforeSpearAim <= 0f ? 1f : timeScaleBeforeSpearAim;
+        Time.fixedDeltaTime = fixedDeltaTimeBeforeSpearAim;
+        spearSlowMotionApplied = false;
+    }
+
+    private Vector2 ResolveSpearAimDirection()
+    {
+        Vector2 fallback = currentSpearAimDirection.sqrMagnitude > 0.01f
+            ? currentSpearAimDirection.normalized
+            : new Vector2(facingRight ? 1f : -1f, 0f);
+
+        if (Mouse.current == null || Camera.main == null)
+        {
+            return fallback;
+        }
+
+        Vector2 screenPosition = Mouse.current.position.ReadValue();
+        Camera camera = Camera.main;
+        Vector3 worldPosition = camera.ScreenToWorldPoint(new Vector3(
+            screenPosition.x,
+            screenPosition.y,
+            Mathf.Abs(camera.transform.position.z - transform.position.z)));
+
+        Vector2 delta = (Vector2)worldPosition - GetSpearOrigin();
+        if (delta.sqrMagnitude < SpearAimMinDistance * SpearAimMinDistance)
+        {
+            return fallback;
+        }
+
+        return delta.normalized;
+    }
+
+    private Vector2 GetSpearOrigin()
+    {
+        return (Vector2)transform.position + Vector2.up * SpearOriginVerticalOffset;
+    }
+
+    private void UpdateSpearAimGuide()
+    {
+        if (!isSpearAiming)
+        {
+            return;
+        }
+
+        EnsureSpearAimGuide();
+        spearAimGuide.SetActive(true);
+
+        Vector2 origin = GetSpearOrigin();
+        float angle = Mathf.Atan2(currentSpearAimDirection.y, currentSpearAimDirection.x) * Mathf.Rad2Deg;
+        spearAimGuide.transform.position = new Vector3(origin.x, origin.y, -0.45f);
+        spearAimGuide.transform.rotation = Quaternion.Euler(0f, 0f, angle);
+
+        spearAimLine.localPosition = new Vector3(SpearAimGuideLength * 0.5f, 0f, 0f);
+        spearAimLine.localScale = new Vector3(SpearAimGuideLength, 0.045f, 1f);
+        spearAimReticle.localPosition = new Vector3(SpearAimGuideLength, 0f, 0f);
+        spearAimReticle.localScale = new Vector3(0.2f, 0.2f, 1f);
+
+        float alpha = 0.52f + Mathf.PingPong(Time.unscaledTime * 2.8f, 0.24f);
+        spearAimLineRenderer.color = new Color(SpearAimColor.r, SpearAimColor.g, SpearAimColor.b, alpha);
+        spearAimReticleRenderer.color = new Color(0.9f, 1f, 1f, alpha + 0.12f);
+    }
+
+    private void EnsureSpearAimGuide()
+    {
+        if (spearAimGuide != null)
+        {
+            return;
+        }
+
+        spearAimGuide = new GameObject("IceSpearAimGuide");
+
+        GameObject lineObject = new("AimLine");
+        lineObject.transform.SetParent(spearAimGuide.transform, false);
+        spearAimLine = lineObject.transform;
+        spearAimLineRenderer = lineObject.AddComponent<SpriteRenderer>();
+        spearAimLineRenderer.sprite = PrimitiveSpriteLibrary.SquareSprite;
+        spearAimLineRenderer.sortingOrder = 18;
+
+        GameObject reticleObject = new("AimReticle");
+        reticleObject.transform.SetParent(spearAimGuide.transform, false);
+        spearAimReticle = reticleObject.transform;
+        spearAimReticleRenderer = reticleObject.AddComponent<SpriteRenderer>();
+        spearAimReticleRenderer.sprite = PrimitiveSpriteLibrary.SquareSprite;
+        spearAimReticleRenderer.sortingOrder = 19;
+    }
+
+    private void HideSpearAimGuide()
+    {
+        if (spearAimGuide != null)
+        {
+            spearAimGuide.SetActive(false);
+        }
+    }
+
     private void HandleAttack()
     {
         if (Time.time < nextAttackTime)
@@ -600,6 +848,11 @@ public class PlayerController : MonoBehaviour
 
     private void HandleFlip()
     {
+        if (isSpearAiming)
+        {
+            return;
+        }
+
         if (moveInput > 0.01f)
         {
             facingRight = true;
