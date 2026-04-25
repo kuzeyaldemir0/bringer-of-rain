@@ -10,8 +10,9 @@ public class ValveController : MonoBehaviour, IWaterReactive
     private string valveLabel;
     private bool activated;
 
-    private static readonly Color InactiveColor = new(0.45f, 0.24f, 0.13f, 1f);
-    private static readonly Color ActiveColor = new(0.16f, 0.86f, 1f, 1f);
+    private static readonly Color InactiveColor = new(0.85f, 0.85f, 0.92f, 1f);
+    private static readonly Color ActiveColor = new(0.7f, 0.95f, 1f, 1f);
+    private static Sprite cachedValveSprite;
 
     public void Configure(string label, GameStateController controller, SpriteRenderer glow)
     {
@@ -48,7 +49,16 @@ public class ValveController : MonoBehaviour, IWaterReactive
     private void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
-        spriteRenderer.sprite = PrimitiveSpriteLibrary.SquareSprite;
+        if (cachedValveSprite == null)
+        {
+            Texture2D tex = Resources.Load<Texture2D>("Tiles/Valve");
+            if (tex != null)
+            {
+                tex.filterMode = FilterMode.Point;
+                cachedValveSprite = Sprite.Create(tex, new Rect(0f, 0f, tex.width, tex.height), new Vector2(0.5f, 0.5f), 32f, 0, SpriteMeshType.FullRect);
+            }
+        }
+        spriteRenderer.sprite = cachedValveSprite != null ? cachedValveSprite : PrimitiveSpriteLibrary.SquareSprite;
         spriteRenderer.color = InactiveColor;
         spriteRenderer.sortingOrder = 8;
 

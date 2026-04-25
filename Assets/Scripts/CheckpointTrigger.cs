@@ -8,15 +8,17 @@ public class CheckpointTrigger : MonoBehaviour
     private Vector3 checkpointPosition;
     private bool activated;
 
-    private static readonly Color InactiveColor = new(0.36f, 0.27f, 0.2f, 1f);
-    private static readonly Color ActiveColor = new(0.16f, 0.86f, 1f, 1f);
+    private static readonly Color ActiveColor = new(1f, 1f, 1f, 1f);
 
     public void Configure(Vector3 checkpoint, GameStateController controller, SpriteRenderer beacon)
     {
         checkpointPosition = checkpoint;
         gameState = controller;
         beaconRenderer = beacon;
-        beaconRenderer.color = InactiveColor;
+        if (beaconRenderer != null)
+        {
+            beaconRenderer.enabled = false;
+        }
     }
 
     private void Awake()
@@ -39,6 +41,7 @@ public class CheckpointTrigger : MonoBehaviour
         {
             activated = true;
             GameAudioController.Play(AudioCue.Checkpoint);
+            beaconRenderer.enabled = true;
             beaconRenderer.color = ActiveColor;
         }
     }

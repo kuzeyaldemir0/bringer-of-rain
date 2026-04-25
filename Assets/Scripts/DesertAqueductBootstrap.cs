@@ -93,16 +93,7 @@ public class DesertAqueductBootstrap : MonoBehaviour
 
     private void BuildBackdrop()
     {
-        AddTextureBackdrop("PalmIslandHorizon", "Backgrounds/PalmIsland", new Vector2(20f, 1.5f), new Vector2(80f, 22f), -19, 0.92f);
-        AddTextureBackdrop("PalmIslandCloudsLeft", "Backgrounds/BigClouds", new Vector2(2f, 6.2f), new Vector2(28f, 6f), -17, 0.85f);
-        AddTextureBackdrop("PalmIslandCloudsCenter", "Backgrounds/BigClouds", new Vector2(22f, 7.4f), new Vector2(28f, 6f), -17, 0.8f);
-        AddTextureBackdrop("PalmIslandCloudsRight", "Backgrounds/BigClouds", new Vector2(40f, 6.6f), new Vector2(28f, 6f), -17, 0.85f);
-
-        CreateVisual("Sun", new Vector2(33f, 10f), new Vector2(6f, 6f), new Color(1f, 0.93f, 0.65f, 0.7f), false, -20);
-        CreateVisual("DuneFarA", new Vector2(8f, -1.2f), new Vector2(30f, 8f), new Color(0.87f, 0.72f, 0.45f, 0.35f), false, -18);
-        CreateVisual("DuneFarB", new Vector2(34f, -0.8f), new Vector2(28f, 7f), new Color(0.8f, 0.63f, 0.38f, 0.32f), false, -18);
-        CreateVisual("AqueductShadow", new Vector2(24f, 1.7f), new Vector2(50f, 0.7f), ShadowColor, false, -10);
-        CreateVisual("LowerShadow", new Vector2(30f, -12.2f), new Vector2(38f, 2f), new Color(0.2f, 0.14f, 0.08f, 0.45f), false, -8);
+        AddTextureBackdrop("DesertScene", "Backgrounds/DesertScene", new Vector2(20f, 1.5f), new Vector2(80f, 22f), -19, 1f);
     }
 
     private void BuildLevelGeometry()
@@ -111,45 +102,14 @@ public class DesertAqueductBootstrap : MonoBehaviour
         CreateTiledOverlay("EntryFloorTiles", new Vector2(0f, -4.5f), new Vector2(16f, 1f), "Tiles/PalmIsland", 1, 0);
         CreateSolid("JunctionFloor", new Vector2(12f, -4.5f), new Vector2(8f, 1f), SandColor);
         CreateTiledOverlay("JunctionFloorTiles", new Vector2(12f, -4.5f), new Vector2(8f, 1f), "Tiles/PalmIsland", 1, 0);
-        CreateOneWayPlatform("UpperLedge", new Vector2(19f, 0.25f), new Vector2(6f, 1f), StoneColor);
-        CreateTiledOverlay("UpperLedgeTiles", new Vector2(19f, 0.25f), new Vector2(6f, 1f), "Tiles/PalmIsland", 1, 0);
-        CreateOneWayPlatform("UpperBridgeLeft", new Vector2(28f, 0.25f), new Vector2(10f, 1f), StoneColor);
-        CreateTiledOverlay("UpperBridgeLeftTiles", new Vector2(28f, 0.25f), new Vector2(10f, 1f), "Tiles/PalmIsland", 1, 0);
-        CreateOneWayPlatform("UpperBridgeRight", new Vector2(41f, 0.25f), new Vector2(10f, 1f), StoneColor);
-        CreateTiledOverlay("UpperBridgeRightTiles", new Vector2(41f, 0.25f), new Vector2(10f, 1f), "Tiles/PalmIsland", 1, 0);
-
-        GameObject gateBarrier = CreateSolid("JunctionGate", new Vector2(22.5f, -0.35f), new Vector2(0.8f, 3.6f), RustColor);
-        GameObject restoredBridge = CreateOneWayPlatform("RestoredWaterBridge", new Vector2(34.5f, 0.25f), new Vector2(4.6f, 1f), WaterColor);
-        restoredBridge.SetActive(false);
-        unlockOnRestore.Add(restoredBridge);
-
-        GameObject stepOne = CreateOneWayPlatform("WaterStep01", new Vector2(37.6f, -8.55f), new Vector2(3.4f, 0.55f), WaterColor);
-        GameObject stepTwo = CreateOneWayPlatform("WaterStep02", new Vector2(39.4f, -7.0f), new Vector2(3.4f, 0.55f), WaterColor);
-        GameObject stepThree = CreateOneWayPlatform("WaterStep03", new Vector2(41.2f, -5.45f), new Vector2(3.5f, 0.55f), WaterColor);
-        GameObject stepFour = CreateOneWayPlatform("WaterStep04", new Vector2(42.8f, -3.9f), new Vector2(3.6f, 0.55f), WaterColor);
-        GameObject stepFive = CreateOneWayPlatform("WaterStep05", new Vector2(43.9f, -2.35f), new Vector2(4f, 0.55f), WaterColor);
-        GameObject stepSix = CreateOneWayPlatform("WaterStep06", new Vector2(41.6f, -1.0f), new Vector2(6.8f, 0.55f), WaterColor);
-        stepOne.SetActive(false);
-        stepTwo.SetActive(false);
-        stepThree.SetActive(false);
-        stepFour.SetActive(false);
-        stepFive.SetActive(false);
-        stepSix.SetActive(false);
-        unlockOnRestore.Add(stepOne);
-        unlockOnRestore.Add(stepTwo);
-        unlockOnRestore.Add(stepThree);
-        unlockOnRestore.Add(stepFour);
-        unlockOnRestore.Add(stepFive);
-        unlockOnRestore.Add(stepSix);
-
         CreateSolid("ShaftLeftLip", new Vector2(15.5f, -4.1f), new Vector2(1f, 2f), StoneColor);
         CreateTiledOverlay("ShaftLeftLipTiles", new Vector2(15.5f, -4.1f), new Vector2(1f, 2f), "Tiles/PalmIsland", 4, 2);
         CreateSolid("ShaftRightLip", new Vector2(22.5f, -4.1f), new Vector2(1f, 2f), StoneColor);
         CreateTiledOverlay("ShaftRightLipTiles", new Vector2(22.5f, -4.1f), new Vector2(1f, 2f), "Tiles/PalmIsland", 4, 2);
         CreateSolid("LeftBoundary", new Vector2(-8.5f, -2.5f), new Vector2(1f, 10f), StoneColor);
         CreateTiledOverlay("LeftBoundaryTiles", new Vector2(-8.5f, -2.5f), new Vector2(1f, 10f), "Tiles/PalmIsland", 4, 2);
-        CreateSolid("RightBoundary", new Vector2(46.5f, -2.5f), new Vector2(1f, 10f), StoneColor);
-        CreateTiledOverlay("RightBoundaryTiles", new Vector2(46.5f, -2.5f), new Vector2(1f, 10f), "Tiles/PalmIsland", 4, 2);
+        CreateSolid("RightBoundary", new Vector2(51.5f, -2.5f), new Vector2(1f, 10f), StoneColor);
+        CreateTiledOverlay("RightBoundaryTiles", new Vector2(51.5f, -2.5f), new Vector2(1f, 10f), "Tiles/PalmIsland", 4, 2);
 
         CreateSolid("LowerFloorLeft", new Vector2(19f, -10.5f), new Vector2(8f, 1f), SandColor);
         CreateTiledOverlay("LowerFloorLeftTiles", new Vector2(19f, -10.5f), new Vector2(8f, 1f), "Tiles/PalmIsland", 1, 0);
@@ -159,23 +119,16 @@ public class DesertAqueductBootstrap : MonoBehaviour
         CreateTiledOverlay("LowerFloorRightTiles", new Vector2(40.5f, -10.5f), new Vector2(11f, 1f), "Tiles/PalmIsland", 1, 0);
         CreateVisual("SpillwayGlow", new Vector2(18.8f, -6.6f), new Vector2(5.8f, 0.16f), new Color(WaterColor.r, WaterColor.g, WaterColor.b, 0.22f), false, 1);
 
-        CreateSolid("ValveAPedestal", new Vector2(30f, -8.5f), new Vector2(3f, 3f), RustColor);
-        CreateSolid("ReservoirStepA", new Vector2(38.8f, -9.25f), new Vector2(2.6f, 1.5f), RustColor);
-        CreateSolid("ReservoirStepB", new Vector2(41.8f, -7.25f), new Vector2(2.6f, 2f), RustColor);
-        CreateSolid("ValveBPedestal", new Vector2(44.5f, -5.15f), new Vector2(3f, 3.8f), RustColor);
-
-        CreateVisual("UpperPipeA", new Vector2(28f, 1.8f), new Vector2(10f, 0.35f), RustColor, false, 4);
-        CreateVisual("UpperPipeB", new Vector2(41f, 1.8f), new Vector2(10f, 0.35f), RustColor, false, 4);
-
-        GameObject waterFlowA = CreateVisual("WaterFlowLeft", new Vector2(28f, 1.2f), new Vector2(10f, 0.18f), WaterColor, false, 5);
-        GameObject waterFlowBridge = CreateVisual("WaterFlowBridge", new Vector2(34.5f, 1.2f), new Vector2(3f, 0.18f), WaterColor, false, 5);
-        GameObject waterFlowB = CreateVisual("WaterFlowRight", new Vector2(41f, 1.2f), new Vector2(10f, 0.18f), WaterColor, false, 5);
-        waterFlowA.SetActive(false);
-        waterFlowBridge.SetActive(false);
-        waterFlowB.SetActive(false);
-        unlockOnRestore.Add(waterFlowA);
-        unlockOnRestore.Add(waterFlowBridge);
-        unlockOnRestore.Add(waterFlowB);
+        CreateSolid("ValveAPedestal", new Vector2(30f, -8.5f), new Vector2(3f, 3f), StoneColor);
+        CreateTiledOverlay("ValveAPedestalTiles", new Vector2(30f, -8.5f), new Vector2(3f, 3f), "Tiles/PalmIsland", 4, 2);
+        CreateSolid("ReservoirStepA", new Vector2(38.8f, -9.25f), new Vector2(2.6f, 1.5f), StoneColor);
+        CreateTiledOverlay("ReservoirStepATiles", new Vector2(38.8f, -9.25f), new Vector2(2.6f, 1.5f), "Tiles/PalmIsland", 4, 2);
+        CreateSolid("ReservoirStepB", new Vector2(41.8f, -7.25f), new Vector2(2.6f, 2f), StoneColor);
+        CreateTiledOverlay("ReservoirStepBTiles", new Vector2(41.8f, -7.25f), new Vector2(2.6f, 2f), "Tiles/PalmIsland", 4, 2);
+        CreateSolid("ValveBPedestal", new Vector2(44.5f, -5.15f), new Vector2(3f, 3.8f), StoneColor);
+        CreateTiledOverlay("ValveBPedestalTiles", new Vector2(44.5f, -5.15f), new Vector2(3f, 3.8f), "Tiles/PalmIsland", 4, 2);
+        CreateSolid("ReservoirWalkway", new Vector2(48.25f, -3.6f), new Vector2(4.5f, 0.7f), SandColor);
+        CreateTiledOverlay("ReservoirWalkwayTiles", new Vector2(48.25f, -3.6f), new Vector2(4.5f, 0.7f), "Tiles/PalmIsland", 1, 0);
 
         CreateEnemy("SentryScout", new Vector2(4.5f, -3.42f), 2.6f, 6.8f, 1.45f, "MaskDude");
         CreateEnemy("SentryA", new Vector2(19.5f, -9.42f), 17.2f, 21.4f, 1.8f, "MaskDude");
@@ -185,20 +138,20 @@ public class DesertAqueductBootstrap : MonoBehaviour
         CreateHazard("DrySpikes", new Vector2(35f, -10f), new Vector2(2f, 0.7f), false);
         CreateHazard("KillPlane", new Vector2(20f, -18f), new Vector2(80f, 4f), true);
 
-        CreateValve("Valve of Mercy", new Vector2(30f, -6.85f), "Valve of Mercy");
-        CreateValve("Valve of Witness", new Vector2(44.5f, -1.95f), "Valve of Witness");
+        CreateValve("Valve of Mercy", new Vector2(30f, -6.25f), "Valve of Mercy");
+        CreateValve("Valve of Witness", new Vector2(44.5f, -2.5f), "Valve of Witness");
 
-        CreateCheckpoint(new Vector2(33.6f, -8.7f), new Vector3(33.6f, -9.1f, 0f));
+        CreateCheckpoint(new Vector2(33.6f, -9.0f), new Vector3(33.6f, -9.1f, 0f));
         CreateStorySign(
-            new Vector2(10.5f, -2.75f),
+            new Vector2(10.5f, -3.0f),
             "DECREE",
-            "Wardens above.\nPumps below.",
-            "The cracked spillway is the only open path into the pumps below.",
+            "Pumps below.\nValves twin.",
+            "The cracked spillway drops into the lower pumps. Restore both valves to open the reservoir gate beyond.",
             new Vector2(3.4f, 3f));
 
-        CreateExit("ReservoirGate", new Vector2(45f, 1.8f), new Vector2(2.2f, 4f), ExitTrigger.ExitMode.AdvanceChapter);
+        CreateExit("ReservoirGate", new Vector2(49.5f, -1.1f), new Vector2(2.2f, 3.4f), ExitTrigger.ExitMode.AdvanceChapter);
 
-        gameState.ConfigureProgression(gateBarrier, unlockOnRestore);
+        gameState.ConfigureProgression(null, unlockOnRestore);
     }
 
     private void BuildChapterTwoGeometry()
@@ -211,45 +164,35 @@ public class DesertAqueductBootstrap : MonoBehaviour
         Vector3 chapterTwoSpawn = new(53.6f, -3.1f, 0f);
         Color vaultStone = new(0.21f, 0.31f, 0.35f, 1f);
         Color vaultWater = new(0.18f, 0.82f, 0.98f, 0.92f);
-        Color vaultMist = new(0.48f, 0.83f, 0.91f, 0.18f);
 
-        CreateVisual("VaultBackdrop", new Vector2(62.5f, -0.6f), new Vector2(24f, 10f), new Color(0.16f, 0.28f, 0.31f, 0.14f), false, -16);
-        CreateVisual("VaultMist", new Vector2(63.5f, 1.8f), new Vector2(20f, 2.6f), vaultMist, false, -15);
+        CreateVisual("VaultBackdrop", new Vector2(64f, -0.6f), new Vector2(50f, 20f), new Color(0.13f, 0.22f, 0.26f, 0.98f), false, -16);
         CreateSolid("VaultFloor", new Vector2(62.5f, -4.5f), new Vector2(22f, 1f), vaultStone);
         CreateTiledOverlay("VaultFloorTiles", new Vector2(62.5f, -4.5f), new Vector2(22f, 1f), "Tiles/PalmIsland", 1, 0);
         CreateSolid("VaultRightBoundary", new Vector2(78.3f, -1.8f), new Vector2(1f, 12f), vaultStone);
         CreateTiledOverlay("VaultRightBoundaryTiles", new Vector2(78.3f, -1.8f), new Vector2(1f, 12f), "Tiles/PalmIsland", 4, 2);
-        CreateSolid("VaultColumnA", new Vector2(59.8f, -2.4f), new Vector2(1.1f, 4.2f), StoneColor);
-        CreateTiledOverlay("VaultColumnATiles", new Vector2(59.8f, -2.4f), new Vector2(1.1f, 4.2f), "Tiles/PalmIsland", 4, 2);
-        CreateSolid("VaultColumnB", new Vector2(68.6f, -2.0f), new Vector2(1.1f, 5f), StoneColor);
-        CreateTiledOverlay("VaultColumnBTiles", new Vector2(68.6f, -2.0f), new Vector2(1.1f, 5f), "Tiles/PalmIsland", 4, 2);
+        CreateSolid("VaultColumnA", new Vector2(59.8f, -2.45f), new Vector2(1.1f, 3.1f), StoneColor);
+        CreateTiledOverlay("VaultColumnATiles", new Vector2(59.8f, -2.45f), new Vector2(1.1f, 3.1f), "Tiles/PalmIsland", 4, 2);
+        CreateSolid("VaultColumnB", new Vector2(68.6f, -2.25f), new Vector2(1.1f, 3.5f), StoneColor);
+        CreateTiledOverlay("VaultColumnBTiles", new Vector2(68.6f, -2.25f), new Vector2(1.1f, 3.5f), "Tiles/PalmIsland", 4, 2);
         CreateSolid("VaultSealPedestal", new Vector2(75.2f, -2.6f), new Vector2(3.8f, 3.8f), RustColor);
-
-        CreateOneWayPlatform("VaultStepA", new Vector2(56.8f, -1.5f), new Vector2(3.6f, 0.6f), vaultWater);
-        AddTextureBackdrop("VaultReflectA", "Backgrounds/WaterReflectMedium", new Vector2(56.8f, -1.05f), new Vector2(3.4f, 0.32f), 4, 0.95f, 32f);
-        CreateOneWayPlatform("VaultStepB", new Vector2(61.9f, -0.2f), new Vector2(4.4f, 0.6f), vaultWater);
-        AddTextureBackdrop("VaultReflectB", "Backgrounds/WaterReflectBig", new Vector2(61.9f, 0.25f), new Vector2(4.2f, 0.32f), 4, 0.95f, 32f);
-        CreateOneWayPlatform("VaultStepC", new Vector2(66.4f, -2.3f), new Vector2(3.8f, 0.6f), vaultWater);
-        CreateOneWayPlatform("VaultStepD", new Vector2(71.2f, -0.9f), new Vector2(4.2f, 0.6f), vaultWater);
-        AddTextureBackdrop("VaultReflectD", "Backgrounds/WaterReflectSmall", new Vector2(71.2f, -0.45f), new Vector2(4.0f, 0.32f), 4, 0.95f, 32f);
 
         CreateHazard("VaultSpikesA", new Vector2(64.3f, -4.03f), new Vector2(2.4f, 0.7f), false);
         CreateHazard("VaultSpikesB", new Vector2(72.2f, -4.03f), new Vector2(2.1f, 0.7f), false);
 
         CreateEnemy("VaultHunterA", new Vector2(57f, -3.42f), 54.6f, 59.6f, 2.15f, "NinjaFrog", 1.35f);
         CreateEnemy("VaultCrusherA", new Vector2(63.4f, -3.42f), 61.2f, 66.2f, 2.25f, "MaskDude", 1.55f);
-        CreateEnemy("VaultHunterB", new Vector2(71.2f, -0.02f), 69.3f, 73.1f, 2.4f, "NinjaFrog", 1.7f);
+        CreateEnemy("VaultHunterB", new Vector2(70.5f, -3.42f), 68.8f, 73.0f, 2.4f, "NinjaFrog", 1.7f);
         CreateEnemy("VaultCrusherB", new Vector2(72.1f, -3.42f), 71.2f, 73.0f, 2.5f, "MaskDude", 1.82f);
 
         CreateCheckpoint(new Vector2(53.8f, -3.7f), chapterTwoSpawn);
         CreateStorySign(
-            new Vector2(56.2f, -2.75f),
+            new Vector2(56.2f, -3.0f),
             "VAULT",
             "Flooded below.\nTeeth ahead.",
             "Chapter II: the drowned vault. These wardens strike harder and dash faster.",
             new Vector2(3.4f, 3f));
 
-        CreateExit("TidalSeal", new Vector2(76.2f, -0.85f), new Vector2(2.1f, 3.2f), ExitTrigger.ExitMode.FinalSeal);
+        CreateExit("TidalSeal", new Vector2(76.2f, 1.45f), new Vector2(2.1f, 3.2f), ExitTrigger.ExitMode.FinalSeal);
 
         worldRoot = previousRoot;
         chapterTwoRoot.SetActive(false);
@@ -272,13 +215,9 @@ public class DesertAqueductBootstrap : MonoBehaviour
         Color courtBackdrop = new(0.12f, 0.07f, 0.16f, 1f);
         Color courtFloor = new(0.18f, 0.13f, 0.22f, 1f);
         Color courtPillar = new(0.34f, 0.18f, 0.36f, 1f);
-        Color courtMist = new(0.62f, 0.34f, 0.78f, 0.18f);
         Color courtAccent = new(0.92f, 0.36f, 0.42f, 0.85f);
 
-        CreateVisual("CourtBackdrop", new Vector2(arenaCenterX, -0.6f), new Vector2(24f, 11f), courtBackdrop, false, -16);
-        AddTextureBackdrop("CourtAtmosphere", "Kenney/Backgrounds", new Vector2(arenaCenterX, 0.4f), new Vector2(24f, 8f), -15, 0.22f);
-        CreateVisual("CourtMistA", new Vector2(arenaCenterX - 4f, 1.4f), new Vector2(14f, 2.4f), courtMist, false, -14);
-        CreateVisual("CourtMistB", new Vector2(arenaCenterX + 5f, 2.2f), new Vector2(12f, 1.8f), courtMist, false, -14);
+        CreateVisual("CourtBackdrop", new Vector2(arenaCenterX, -0.6f), new Vector2(50f, 22f), courtBackdrop, false, -16);
         CreateVisual("CourtAccent", new Vector2(arenaCenterX, 3.4f), new Vector2(20f, 0.18f), courtAccent, false, -12);
 
         CreateSolid("CourtFloor", new Vector2(arenaCenterX, -4.5f), new Vector2(22f, 1f), courtFloor);
@@ -289,16 +228,12 @@ public class DesertAqueductBootstrap : MonoBehaviour
         CreateTiledOverlay("CourtRightWallTiles", new Vector2(arenaRightBound + 0.5f, -1f), new Vector2(1f, 9f), "Tiles/PalmIsland", 4, 2);
         CreateSolid("CourtCeiling", new Vector2(arenaCenterX, 4.4f), new Vector2(22f, 0.6f), courtPillar);
         CreateTiledOverlay("CourtCeilingTiles", new Vector2(arenaCenterX, 4.4f), new Vector2(22f, 0.6f), "Tiles/PalmIsland", 4, 2);
-        CreateSolid("CourtPillarLeft", new Vector2(89.5f, -2.6f), new Vector2(0.7f, 2.6f), courtPillar);
-        CreateTiledOverlay("CourtPillarLeftTiles", new Vector2(89.5f, -2.6f), new Vector2(0.7f, 2.6f), "Tiles/PalmIsland", 4, 2);
-        CreateSolid("CourtPillarRight", new Vector2(98.5f, -2.6f), new Vector2(0.7f, 2.6f), courtPillar);
-        CreateTiledOverlay("CourtPillarRightTiles", new Vector2(98.5f, -2.6f), new Vector2(0.7f, 2.6f), "Tiles/PalmIsland", 4, 2);
 
         CreateHazard("CourtKillPlane", new Vector2(arenaCenterX, -18f), new Vector2(28f, 4f), true);
 
         CreateCheckpoint(new Vector2(85.4f, -3.7f), chapterThreeSpawn);
         CreateStorySign(
-            new Vector2(86.5f, -2.75f),
+            new Vector2(86.5f, -3.0f),
             "WARDEN",
             "Stun-immune.\nStrike on the slam.",
             "The warden of the drowned vault. Strike only when its guard breaks.",
@@ -530,16 +465,26 @@ public class DesertAqueductBootstrap : MonoBehaviour
         GameObject valveRoot = new(objectName);
         valveRoot.transform.SetParent(worldRoot, false);
         valveRoot.transform.position = position;
-        valveRoot.transform.localScale = new Vector3(0.9f, 1.5f, 1f);
 
-        SpriteRenderer bodyRenderer = valveRoot.AddComponent<SpriteRenderer>();
-        bodyRenderer.sortingOrder = 8;
+        valveRoot.AddComponent<SpriteRenderer>();
         valveRoot.AddComponent<BoxCollider2D>();
 
-        GameObject glow = CreateChildVisual(valveRoot.transform, "Glow", new Vector2(0f, 0.25f), new Vector2(1f, 1f), WaterColor, 7);
-        SpriteRenderer glowRenderer = glow.GetComponent<SpriteRenderer>();
-
-        CreateChildVisual(valveRoot.transform, "Handle", new Vector2(0f, 0.55f), new Vector2(1.2f, 0.18f), new Color(0.75f, 0.58f, 0.34f, 1f), 9);
+        GameObject glow = new("Glow");
+        glow.transform.SetParent(valveRoot.transform, false);
+        glow.transform.localPosition = new Vector3(0f, 0.31f, 0f);
+        SpriteRenderer glowRenderer = glow.AddComponent<SpriteRenderer>();
+        Texture2D glowTex = Resources.Load<Texture2D>("Tiles/ValveGlow");
+        if (glowTex != null)
+        {
+            glowTex.filterMode = FilterMode.Point;
+            glowRenderer.sprite = Sprite.Create(glowTex, new Rect(0f, 0f, glowTex.width, glowTex.height), new Vector2(0.5f, 0.5f), 32f, 0, SpriteMeshType.FullRect);
+        }
+        else
+        {
+            glowRenderer.sprite = PrimitiveSpriteLibrary.SquareSprite;
+            glowRenderer.color = WaterColor;
+        }
+        glowRenderer.sortingOrder = 9;
 
         ValveController valve = valveRoot.AddComponent<ValveController>();
         valve.Configure(label, gameState, glowRenderer);
@@ -547,7 +492,7 @@ public class DesertAqueductBootstrap : MonoBehaviour
 
     private void CreateHazard(string objectName, Vector2 position, Vector2 size, bool instantRespawn)
     {
-        GameObject hazard = CreateVisual(objectName, position, size, instantRespawn ? new Color(0.15f, 0.1f, 0.08f, 0.01f) : HazardColor, false, 2);
+        GameObject hazard = CreateVisual(objectName, position, size, instantRespawn ? new Color(0.15f, 0.1f, 0.08f, 0.01f) : new Color(0.16f, 0.13f, 0.18f, 0.85f), false, 2);
         hazard.layer = WaterLayer;
 
         BoxCollider2D collider2D = hazard.AddComponent<BoxCollider2D>();
@@ -558,10 +503,37 @@ public class DesertAqueductBootstrap : MonoBehaviour
 
         if (!instantRespawn)
         {
-            CreateChildVisual(hazard.transform, "SpikeA", new Vector2(-0.5f, 0.35f), new Vector2(0.3f, 0.3f), HazardColor, 3);
-            CreateChildVisual(hazard.transform, "SpikeB", new Vector2(0f, 0.35f), new Vector2(0.3f, 0.3f), HazardColor, 3);
-            CreateChildVisual(hazard.transform, "SpikeC", new Vector2(0.5f, 0.35f), new Vector2(0.3f, 0.3f), HazardColor, 3);
+            int spikeCount = Mathf.Max(3, Mathf.RoundToInt(size.x * 1.4f));
+            for (int i = 0; i < spikeCount; i++)
+            {
+                float localX = -0.5f + (i + 0.5f) / spikeCount;
+                CreateChildSpike(hazard.transform, $"Spike{i}", new Vector2(localX, 0.35f), new Vector2(0.95f / spikeCount, 0.85f));
+            }
         }
+    }
+
+    private static Sprite cachedSpikeSprite;
+
+    private void CreateChildSpike(Transform parent, string objectName, Vector2 localPosition, Vector2 size)
+    {
+        GameObject spike = new(objectName);
+        spike.transform.SetParent(parent, false);
+        spike.transform.localPosition = localPosition;
+        spike.transform.localScale = new Vector3(size.x, size.y, 1f);
+
+        SpriteRenderer renderer = spike.AddComponent<SpriteRenderer>();
+        if (cachedSpikeSprite == null)
+        {
+            Texture2D texture = Resources.Load<Texture2D>("Tiles/Spike");
+            if (texture != null)
+            {
+                texture.filterMode = FilterMode.Point;
+                cachedSpikeSprite = Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 32f, 0, SpriteMeshType.FullRect);
+            }
+        }
+        renderer.sprite = cachedSpikeSprite != null ? cachedSpikeSprite : PrimitiveSpriteLibrary.SquareSprite;
+        renderer.color = cachedSpikeSprite != null ? Color.white : new Color(0.45f, 0.45f, 0.55f, 1f);
+        renderer.sortingOrder = 3;
     }
 
     private void CreateCheckpoint(Vector2 position, Vector3 respawnPoint)
@@ -575,9 +547,38 @@ public class DesertAqueductBootstrap : MonoBehaviour
         collider2D.isTrigger = true;
         collider2D.size = new Vector2(1.4f, 2.2f);
 
-        GameObject beacon = CreateChildVisual(checkpoint.transform, "Beacon", new Vector2(0f, 0.6f), new Vector2(0.8f, 1.2f), new Color(0.36f, 0.27f, 0.2f, 1f), 6);
-        SpriteRenderer beaconRenderer = beacon.GetComponent<SpriteRenderer>();
-        CreateChildVisual(checkpoint.transform, "Post", new Vector2(0f, -0.25f), new Vector2(0.22f, 1.7f), StoneColor, 5);
+        GameObject pillar = new("Pillar");
+        pillar.transform.SetParent(checkpoint.transform, false);
+        pillar.transform.localPosition = Vector3.zero;
+        SpriteRenderer pillarRenderer = pillar.AddComponent<SpriteRenderer>();
+        Texture2D pillarTex = Resources.Load<Texture2D>("Tiles/Checkpoint");
+        if (pillarTex != null)
+        {
+            pillarTex.filterMode = FilterMode.Point;
+            pillarRenderer.sprite = Sprite.Create(pillarTex, new Rect(0f, 0f, pillarTex.width, pillarTex.height), new Vector2(0.5f, 0.5f), 32f, 0, SpriteMeshType.FullRect);
+        }
+        else
+        {
+            pillarRenderer.sprite = PrimitiveSpriteLibrary.SquareSprite;
+            pillarRenderer.color = StoneColor;
+        }
+        pillarRenderer.sortingOrder = 5;
+
+        GameObject beacon = new("Beacon");
+        beacon.transform.SetParent(checkpoint.transform, false);
+        beacon.transform.localPosition = new Vector3(0f, 0.7f, 0f);
+        SpriteRenderer beaconRenderer = beacon.AddComponent<SpriteRenderer>();
+        Texture2D beaconTex = Resources.Load<Texture2D>("Tiles/CheckpointBeacon");
+        if (beaconTex != null)
+        {
+            beaconTex.filterMode = FilterMode.Point;
+            beaconRenderer.sprite = Sprite.Create(beaconTex, new Rect(0f, 0f, beaconTex.width, beaconTex.height), new Vector2(0.5f, 0.5f), 32f, 0, SpriteMeshType.FullRect);
+        }
+        else
+        {
+            beaconRenderer.sprite = PrimitiveSpriteLibrary.SquareSprite;
+        }
+        beaconRenderer.sortingOrder = 7;
 
         CheckpointTrigger trigger = checkpoint.AddComponent<CheckpointTrigger>();
         trigger.Configure(respawnPoint, gameState, beaconRenderer);
@@ -590,12 +591,19 @@ public class DesertAqueductBootstrap : MonoBehaviour
         sign.transform.position = position;
         sign.layer = WaterLayer;
 
-        CreateChildVisual(sign.transform, "Post", new Vector2(0f, -0.5f), new Vector2(0.2f, 1.8f), StoneColor, 5);
-        CreateChildVisual(sign.transform, "Plaque", new Vector2(0f, 0.25f), new Vector2(2.4f, 1.2f), RustColor, 6);
-        CreateChildVisual(sign.transform, "MarkerTop", new Vector2(0f, 0.52f), new Vector2(1.35f, 0.12f), new Color(1f, 0.91f, 0.72f, 1f), 7);
-        CreateChildVisual(sign.transform, "MarkerMid", new Vector2(0f, 0.22f), new Vector2(1.8f, 0.12f), new Color(0.16f, 0.86f, 1f, 0.95f), 7);
-        CreateChildVisual(sign.transform, "MarkerBottom", new Vector2(0f, -0.08f), new Vector2(1.5f, 0.1f), new Color(0.96f, 0.93f, 0.86f, 1f), 7);
-        CreateChildVisual(sign.transform, "MarkerDot", new Vector2(0.8f, -0.32f), new Vector2(0.14f, 0.14f), new Color(0.96f, 0.93f, 0.86f, 1f), 7);
+        SpriteRenderer signRenderer = sign.AddComponent<SpriteRenderer>();
+        Texture2D signTex = Resources.Load<Texture2D>("Tiles/Sign");
+        if (signTex != null)
+        {
+            signTex.filterMode = FilterMode.Point;
+            signRenderer.sprite = Sprite.Create(signTex, new Rect(0f, 0f, signTex.width, signTex.height), new Vector2(0.5f, 0.5f), 32f, 0, SpriteMeshType.FullRect);
+        }
+        else
+        {
+            signRenderer.sprite = PrimitiveSpriteLibrary.SquareSprite;
+            signRenderer.color = RustColor;
+        }
+        signRenderer.sortingOrder = 5;
 
         BoxCollider2D collider2D = sign.AddComponent<BoxCollider2D>();
         collider2D.isTrigger = true;
@@ -612,10 +620,11 @@ public class DesertAqueductBootstrap : MonoBehaviour
         exitRoot.transform.position = position;
         exitRoot.layer = WaterLayer;
 
-        CreateChildVisual(exitRoot.transform, "ArchLeft", new Vector2(-0.9f, -0.4f), new Vector2(0.35f, 3.5f), StoneColor, 6);
-        CreateChildVisual(exitRoot.transform, "ArchRight", new Vector2(0.9f, -0.4f), new Vector2(0.35f, 3.5f), StoneColor, 6);
-        CreateChildVisual(exitRoot.transform, "ArchTop", new Vector2(0f, 1.2f), new Vector2(2.1f, 0.35f), StoneColor, 6);
-        CreateChildVisual(exitRoot.transform, "ReservoirGlow", new Vector2(0f, 0.1f), new Vector2(1.4f, 2.2f), new Color(WaterColor.r, WaterColor.g, WaterColor.b, 0.5f), 5);
+        CreateChildVisual(exitRoot.transform, "PortalInterior", new Vector2(0f, -0.4f), new Vector2(1.6f, 3.5f), WaterColor, 4);
+        CreateChildVisual(exitRoot.transform, "ArchLeft", new Vector2(-0.9f, -0.4f), new Vector2(0.5f, 3.5f), StoneColor, 6);
+        CreateChildVisual(exitRoot.transform, "ArchRight", new Vector2(0.9f, -0.4f), new Vector2(0.5f, 3.5f), StoneColor, 6);
+        CreateChildVisual(exitRoot.transform, "ArchTop", new Vector2(0f, 1.3f), new Vector2(2.4f, 0.55f), StoneColor, 6);
+        CreateChildVisual(exitRoot.transform, "ArchKeystone", new Vector2(0f, 1.3f), new Vector2(0.55f, 0.7f), new Color(StoneColor.r * 1.15f, StoneColor.g * 1.15f, StoneColor.b * 1.15f, 1f), 7);
 
         BoxCollider2D collider2D = exitRoot.AddComponent<BoxCollider2D>();
         collider2D.isTrigger = true;

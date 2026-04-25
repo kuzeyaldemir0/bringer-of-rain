@@ -82,7 +82,7 @@ public class BossController : MonoBehaviour, IWaterReactive
         arenaRightBound = rightBound;
         floorY = groundY;
 
-        idleY = groundY + 1.6f;
+        idleY = groundY + 1.05f;
         slamLandY = groundY + 0.95f;
 
         Vector3 position = transform.position;
@@ -275,7 +275,7 @@ public class BossController : MonoBehaviour, IWaterReactive
     private void TickSlamWindup()
     {
         Vector3 position = transform.position;
-        position.y = Mathf.MoveTowards(position.y, idleY + 0.8f, 1.8f * Time.deltaTime);
+        position.y = Mathf.MoveTowards(position.y, idleY + 0.35f, 1.4f * Time.deltaTime);
         transform.position = position;
 
         if (Time.time >= stateEndsAt)

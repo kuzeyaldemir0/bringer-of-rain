@@ -284,9 +284,9 @@ public class GameStateController : MonoBehaviour
             }
         }
 
-        hintText = "Take the wide blue steps on the right, then cross the reopened aqueduct.";
+        hintText = "Climb past the second valve and walk into the open reservoir gate.";
         UpdateObjective();
-        ShowStoryMessage("Water answers the just. Return to the upper aqueduct.", 4f);
+        ShowStoryMessage("Water answers the just. The reservoir gate stands open.", 4f);
     }
 
     private void BeginChapterTwoTransition()
@@ -441,7 +441,7 @@ public class GameStateController : MonoBehaviour
         }
         else if (CanExit)
         {
-            objectiveText = "Objective: Return to the upper aqueduct and reach the reservoir gate.";
+            objectiveText = "Objective: Walk forward past the second valve to the reservoir gate.";
         }
         else
         {

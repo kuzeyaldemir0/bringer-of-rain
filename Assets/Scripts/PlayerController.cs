@@ -528,6 +528,7 @@ public class PlayerController : MonoBehaviour
         }
 
         WaterBurstVisual.Spawn(burstOrigin, AttackSize, direction);
+        WaterSplashAudio.PlayWhip(transform.position);
     }
 
     private void HandleFootstepAudio()
@@ -594,6 +595,7 @@ public class PlayerController : MonoBehaviour
         }
 
         WaterBurstVisual.Spawn(burstOrigin, DownAttackSize, direction);
+        WaterSplashAudio.PlaySplash(transform.position);
     }
 
     private void HandleFlip()
