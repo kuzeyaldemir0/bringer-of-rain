@@ -19,7 +19,7 @@ public class GameStateController : MonoBehaviour
     private static readonly Color StoryTextColor = new(0.95f, 0.89f, 0.68f, 1f);
     private static readonly Color StoryShadowColor = new(0.02f, 0.02f, 0.03f, 0.95f);
     private static readonly Color RainColor = new(0.42f, 0.88f, 1f, 0.62f);
-    private const string DefaultHintText = "Move A/D or Arrows   Jump Space   Read W near signs   Burst F / Mouse 1 / Enter   Ice Spear hold/release Mouse 2";
+    private const string DefaultHintText = "Movement: WASD\nWater Whip: LMB1 / Enter / F\nBurst Below: S + LMB1 / Enter / F (while in air)\nIce Shard: LMB2";
     private const float TypewriterCharactersPerSecond = 46f;
 
     private PlayerController player;
@@ -47,6 +47,13 @@ public class GameStateController : MonoBehaviour
     private GUIStyle trophyBodyStyle;
     private Texture2D rainTexture;
     private Font storyFont;
+
+    private Texture2D healthBarTexture;
+    private Texture2D manaBarTexture;
+    private int currentHealth = 6;
+    private int maxHealth = 6;
+    private int currentMana = 3;
+    private int maxMana = 3;
 
     private Vector3 checkpointPosition;
     private Vector3 chapterTwoSpawnPoint;
@@ -159,16 +166,18 @@ public class GameStateController : MonoBehaviour
         chapterThreeCameraLimits = cameraLimits;
     }
 
-    public void UpdateHealth(int currentHealth, int maxHealth)
+    public void UpdateHealth(int currentHealthValue, int maxHealthValue)
     {
+        currentHealth = currentHealthValue;
+        maxHealth = maxHealthValue;
         healthText = $"HP {currentHealth}/{maxHealth}";
     }
 
     public void UpdateMana(int currentManaFragments, int maxManaFragments)
     {
-        int currentBars = currentManaFragments / 3;
-        int maxBars = maxManaFragments / 3;
-        manaText = $"MP {currentBars}/{maxBars}";
+        currentMana = currentManaFragments / 3;
+        maxMana = maxManaFragments / 3;
+        manaText = $"MP {currentMana}/{maxMana}";
     }
 
     public void RegisterValveActivated(string valveLabel)
@@ -351,13 +360,61 @@ public class GameStateController : MonoBehaviour
             DrawRainOverlay();
         }
 
-        GUI.Box(new Rect(12f, 12f, 325f, 86f), GUIContent.none, panelStyle);
-        GUI.Label(new Rect(24f, 20f, 120f, 28f), healthText, hudStyle);
-        GUI.Label(new Rect(150f, 20f, 120f, 28f), manaText, hudStyle);
-        GUI.Label(new Rect(24f, 48f, 720f, 44f), objectiveText, hudStyle);
+        if (healthBarTexture == null) healthBarTexture = Resources.Load<Texture2D>("UI/health_bar");
+        if (manaBarTexture == null) manaBarTexture = Resources.Load<Texture2D>("UI/manabar");
 
-        GUI.Box(new Rect(12f, Screen.height - 56f, 560f, 40f), GUIContent.none, panelStyle);
-        GUI.Label(new Rect(24f, Screen.height - 49f, 520f, 28f), hintText, hintStyle);
+        // UI Panel for objective
+        GUI.Box(new Rect(12f, 12f, 600f, 60f), GUIContent.none, panelStyle);
+        GUI.Label(new Rect(24f, 20f, 580f, 44f), objectiveText, hudStyle);
+
+        // Draw Health Bar
+        if (healthBarTexture != null)
+        {
+            float hpWidth = 240f;
+            float hpHeight = hpWidth * (healthBarTexture.height / (float)healthBarTexture.width);
+            float currentHpPercent = 1f;
+
+            int hpIndex = Mathf.Clamp(currentHealth, 0, 6);
+            float[] hpClipWidths = { 320f, 420f, 520f, 620f, 720f, 820f, 1000f };
+            float targetClip = hpClipWidths[hpIndex];
+            currentHpPercent = targetClip / 1000f;
+
+            // Draw dark background bar
+            GUI.color = new Color(0.1f, 0.1f, 0.1f, 0.8f);
+            GUI.DrawTexture(new Rect(24f, 20f, hpWidth, hpHeight), healthBarTexture);
+            
+            // Draw filled bar
+            GUI.color = Color.white;
+            GUI.BeginGroup(new Rect(24f, 20f, hpWidth * currentHpPercent, hpHeight));
+            GUI.DrawTexture(new Rect(0, 0, hpWidth, hpHeight), healthBarTexture);
+            GUI.EndGroup();
+        }
+
+        // Draw Mana Bar
+        if (manaBarTexture != null)
+        {
+            float mpWidth = 120f;
+            float mpHeight = mpWidth * (manaBarTexture.height / (float)manaBarTexture.width);
+            float currentMpPercent = 1f;
+
+            int mpIndex = Mathf.Clamp(currentMana, 0, 3);
+            float[] mpClipWidths = { 0f, 185f, 300f, 454f };
+            float targetClip = mpClipWidths[mpIndex];
+            currentMpPercent = targetClip / 454f;
+
+            // Draw dark background stars
+            GUI.color = new Color(0.1f, 0.1f, 0.1f, 0.8f);
+            GUI.DrawTexture(new Rect(48f, 180f, mpWidth, mpHeight), manaBarTexture);
+            
+            // Draw filled stars
+            GUI.color = Color.white;
+            GUI.BeginGroup(new Rect(48f, 180f, mpWidth * currentMpPercent, mpHeight));
+            GUI.DrawTexture(new Rect(0, 0, mpWidth, mpHeight), manaBarTexture);
+            GUI.EndGroup();
+        }
+
+        GUI.Box(new Rect(12f, Screen.height - 116f, 560f, 100f), GUIContent.none, panelStyle);
+        GUI.Label(new Rect(24f, Screen.height - 109f, 520f, 88f), hintText, hintStyle);
 
         if (!readableStoryVisible && !ReadableStoriesBlocked && !string.IsNullOrWhiteSpace(interactionPrompt))
         {

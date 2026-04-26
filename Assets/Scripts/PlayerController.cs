@@ -836,7 +836,7 @@ public class PlayerController : MonoBehaviour
             SimpleCameraFollow.RequestShake(0.18f, 0.22f);
         }
 
-        WaterBurstVisual.Spawn(burstOrigin, AttackSize, direction);
+        WaterBurstVisual.Spawn(burstOrigin, direction, false, attackVariant, transform);
         WaterSplashAudio.PlayWhip(transform.position);
     }
 
@@ -906,7 +906,7 @@ public class PlayerController : MonoBehaviour
             SimpleCameraFollow.RequestShake(0.18f, 0.22f);
         }
 
-        WaterBurstVisual.Spawn(burstOrigin, DownAttackSize, direction);
+        WaterBurstVisual.Spawn(burstOrigin, direction, true, 0, transform);
         WaterSplashAudio.PlaySplash(transform.position);
     }
 
