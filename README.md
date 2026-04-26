@@ -2,6 +2,10 @@
 
 Bringer of Rain is a 2D Unity action-platformer set in a drought-stricken desert aqueduct. Read old signs, restore sealed valves, survive guarded vaults, and defeat the demon warden to bring rain back to the village.
 
+## Gameplay Video
+
+Watch the 2-minute gameplay demo: [Bringer of Rain Gameplay Demo](https://drive.google.com/file/d/1y1TwvweTThtAiSeVNvhSjQySl2N-HlBy/view?usp=sharing)
+
 ## Features
 
 - Runtime-built 2D platforming level with three chapter-style areas
