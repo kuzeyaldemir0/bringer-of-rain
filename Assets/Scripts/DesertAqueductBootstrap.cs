@@ -206,7 +206,7 @@ public class DesertAqueductBootstrap : MonoBehaviour
         chapterThreeRoot.transform.SetParent(previousRoot, false);
         worldRoot = chapterThreeRoot.transform;
 
-        Vector3 chapterThreeSpawn = new(85.5f, -3.42f, 0f);
+        Vector3 chapterThreeSpawn = new(85.5f, -3.0f, 0f);
         const float arenaCenterX = 94f;
         const float arenaLeftBound = 83.5f;
         const float arenaRightBound = 104.5f;
@@ -235,7 +235,7 @@ public class DesertAqueductBootstrap : MonoBehaviour
         CreateStorySign(
             new Vector2(86.5f, -3.0f),
             "WARDEN",
-            "Stun-immune.\nStrike on the slam.",
+            "Stun-immune.\nStrike during recovery.",
             "The warden of the drowned vault. Strike only when its guard breaks.",
             new Vector2(3.4f, 3f));
 

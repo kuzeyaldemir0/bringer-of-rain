@@ -7,10 +7,8 @@ public class BossSpriteAnimator : MonoBehaviour
 {
     private static readonly Dictionary<string, Sprite[]> CachedAnimations = new();
 
-    private const string ResourceFolder = "Bosses/CaptainClownNose";
-    private const int CellWidth = 64;
-    private const int CellHeight = 40;
-    private const float PixelsPerUnit = 22f;
+    private const string ResourceFolder = "Bosses/DemonSlime";
+    private const float PixelsPerUnit = 36f;
 
     private BossController boss;
     private SpriteRenderer spriteRenderer;
@@ -19,6 +17,7 @@ public class BossSpriteAnimator : MonoBehaviour
     private float nextFrameAt;
     private float frameDuration;
     private int frameIndex;
+    private bool currentClipLoops = true;
 
     private void Awake()
     {
@@ -46,7 +45,14 @@ public class BossSpriteAnimator : MonoBehaviour
 
         if (Time.time >= nextFrameAt)
         {
-            frameIndex = (frameIndex + 1) % activeFrames.Length;
+            if (currentClipLoops)
+            {
+                frameIndex = (frameIndex + 1) % activeFrames.Length;
+            }
+            else if (frameIndex < activeFrames.Length - 1)
+            {
+                frameIndex++;
+            }
             spriteRenderer.sprite = activeFrames[frameIndex];
             nextFrameAt = Time.time + frameDuration;
         }
@@ -56,7 +62,7 @@ public class BossSpriteAnimator : MonoBehaviour
     {
         if (boss.IsDefeated)
         {
-            return "Hit";
+            return "Death";
         }
 
         if (boss.IsSlamming)
@@ -90,6 +96,7 @@ public class BossSpriteAnimator : MonoBehaviour
         }
 
         currentClip = clipName;
+        currentClipLoops = clipName != "Death";
         activeFrames = LoadFrames(clipName);
         frameDuration = clipName switch
         {
@@ -97,6 +104,7 @@ public class BossSpriteAnimator : MonoBehaviour
             "Ground" => 0.07f,
             "Run" => boss.IsDashing ? 0.05f : 0.07f,
             "Attack" => 0.08f,
+            "Death" => 0.075f,
             _ => 0.16f
         };
 
@@ -116,21 +124,23 @@ public class BossSpriteAnimator : MonoBehaviour
             return cached;
         }
 
-        Texture2D texture = Resources.Load<Texture2D>(cacheKey);
-        if (texture == null)
+        Texture2D[] textures = Resources.LoadAll<Texture2D>(cacheKey);
+        if (textures == null || textures.Length == 0)
         {
-            Debug.LogWarning($"Boss animation strip not found at Resources/{cacheKey}.");
+            Debug.LogWarning($"Boss animation frames not found at Resources/{cacheKey}.");
             Sprite[] fallback = { PrimitiveSpriteLibrary.SquareSprite };
             CachedAnimations[cacheKey] = fallback;
             return fallback;
         }
 
-        texture.filterMode = FilterMode.Point;
-        int frameCount = Mathf.Max(1, texture.width / CellWidth);
-        Sprite[] frames = new Sprite[frameCount];
-        for (int i = 0; i < frameCount; i++)
+        System.Array.Sort(textures, (a, b) => ExtractTrailingNumber(a.name).CompareTo(ExtractTrailingNumber(b.name)));
+
+        Sprite[] frames = new Sprite[textures.Length];
+        for (int i = 0; i < textures.Length; i++)
         {
-            Rect rect = new(i * CellWidth, 0f, CellWidth, CellHeight);
+            Texture2D texture = textures[i];
+            texture.filterMode = FilterMode.Point;
+            Rect rect = new(0f, 0f, texture.width, texture.height);
             Sprite sprite = Sprite.Create(texture, rect, new Vector2(0.5f, 0.5f), PixelsPerUnit);
             sprite.name = $"Boss_{clipName}_{i}";
             frames[i] = sprite;
@@ -138,5 +148,11 @@ public class BossSpriteAnimator : MonoBehaviour
 
         CachedAnimations[cacheKey] = frames;
         return frames;
+    }
+
+    private static int ExtractTrailingNumber(string name)
+    {
+        System.Text.RegularExpressions.Match match = System.Text.RegularExpressions.Regex.Match(name, @"_(\d+)$");
+        return match.Success ? int.Parse(match.Groups[1].Value) : 0;
     }
 }

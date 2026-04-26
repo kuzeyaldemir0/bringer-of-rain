@@ -20,7 +20,7 @@ public class BossShockwave : MonoBehaviour
 
         SpriteRenderer renderer = waveObject.AddComponent<SpriteRenderer>();
         renderer.sprite = PrimitiveSpriteLibrary.SquareSprite;
-        renderer.color = new Color(0.18f, 0.86f, 1f, 0.92f);
+        renderer.color = new Color(1f, 0.46f, 0.12f, 0.94f);
         renderer.sortingOrder = 12;
 
         BoxCollider2D collider2D = waveObject.AddComponent<BoxCollider2D>();

@@ -25,7 +25,8 @@ public class BossController : MonoBehaviour, IWaterReactive
     private const int MaxHealthValue = 32;
     private const int Phase2Threshold = 16;
     private const float SlamWindupDuration = 0.7f;
-    private const float SlamFallSpeed = 24f;
+    private const float CleaveActiveDuration = 0.42f;
+    private const float CleaveHitWindow = 0.22f;
     private const float SlamRiseSpeed = 6.5f;
     private const float ExposedDuration = 0.7f;
     private const float DashWindupDuration = 0.45f;
@@ -59,11 +60,13 @@ public class BossController : MonoBehaviour, IWaterReactive
     private float arenaRightBound;
     private float floorY;
     private float idleY;
-    private float slamLandY;
     private float dashSign;
     private int dashesRemaining;
     private int currentHealth;
     private bool initialized;
+    private float cleaveHitWindowEndsAt;
+    private bool cleaveDamageDealt;
+    private float facingDirection = 1f;
 
     public int CurrentHealth => currentHealth;
     public int MaxHealth => MaxHealthValue;
@@ -82,8 +85,7 @@ public class BossController : MonoBehaviour, IWaterReactive
         arenaRightBound = rightBound;
         floorY = groundY;
 
-        idleY = groundY + 1.05f;
-        slamLandY = groundY + 0.95f;
+        idleY = groundY + 2.6f;
 
         Vector3 position = transform.position;
         position.y = idleY;
@@ -151,7 +153,8 @@ public class BossController : MonoBehaviour, IWaterReactive
         body.freezeRotation = true;
         body.interpolation = RigidbodyInterpolation2D.Interpolate;
 
-        bodyCollider.size = new Vector2(1.4f, 1.4f);
+        bodyCollider.size = new Vector2(3.2f, 2.6f);
+        bodyCollider.offset = new Vector2(0f, -1.0f);
 
         spriteRenderer.sprite = PrimitiveSpriteLibrary.SquareSprite;
         spriteRenderer.color = IdleColor;
@@ -202,13 +205,12 @@ public class BossController : MonoBehaviour, IWaterReactive
 
         spriteRenderer.color = Color.Lerp(spriteRenderer.color, TargetColor(), Time.deltaTime * 11f);
 
-        Vector3 facingScale = transform.localScale;
-        float facingSign = Mathf.Abs(facingScale.x);
         if (player != null)
         {
-            facingSign *= player.transform.position.x < transform.position.x ? -1f : 1f;
+            facingDirection = player.transform.position.x < transform.position.x ? -1f : 1f;
+            // Source demon faces left by default in every frame; mirror it when we want to attack right.
+            spriteRenderer.flipX = facingDirection > 0f;
         }
-        transform.localScale = new Vector3(facingSign, facingScale.y, facingScale.z);
     }
 
     private Color TargetColor()
@@ -233,7 +235,7 @@ public class BossController : MonoBehaviour, IWaterReactive
             float dx = player.transform.position.x - transform.position.x;
             float step = Mathf.Clamp(dx, -driftSpeed * Time.deltaTime, driftSpeed * Time.deltaTime);
             Vector3 position = transform.position;
-            position.x = Mathf.Clamp(position.x + step, arenaLeftBound + 1.4f, arenaRightBound - 1.4f);
+            position.x = Mathf.Clamp(position.x + step, arenaLeftBound + 2.8f, arenaRightBound - 2.8f);
             position.y = Mathf.MoveTowards(position.y, idleY, SlamRiseSpeed * Time.deltaTime);
             transform.position = position;
         }
@@ -274,32 +276,66 @@ public class BossController : MonoBehaviour, IWaterReactive
 
     private void TickSlamWindup()
     {
-        Vector3 position = transform.position;
-        position.y = Mathf.MoveTowards(position.y, idleY + 0.35f, 1.4f * Time.deltaTime);
-        transform.position = position;
-
         if (Time.time >= stateEndsAt)
         {
-            state = AttackState.Slamming;
+            EnterCleaveActive();
         }
+    }
+
+    private void EnterCleaveActive()
+    {
+        state = AttackState.Slamming;
+        stateEndsAt = Time.time + CleaveActiveDuration;
+        cleaveHitWindowEndsAt = Time.time + CleaveHitWindow;
+        cleaveDamageDealt = false;
+        GameAudioController.Play(AudioCue.BossSlam);
+        SimpleCameraFollow.RequestShake(0.28f, 0.32f);
+        SimpleCameraFollow.RequestHitstop(0.04f);
     }
 
     private void TickSlamming()
     {
-        Vector3 position = transform.position;
-        position.y = Mathf.MoveTowards(position.y, slamLandY, SlamFallSpeed * Time.deltaTime);
-        transform.position = position;
-
-        if (Mathf.Abs(position.y - slamLandY) <= 0.001f)
+        if (!cleaveDamageDealt && Time.time < cleaveHitWindowEndsAt)
         {
-            GameAudioController.Play(AudioCue.BossSlam);
-            BossShockwave.Spawn(new Vector2(transform.position.x, floorY + 0.4f), 1f);
-            BossShockwave.Spawn(new Vector2(transform.position.x, floorY + 0.4f), -1f);
-            SimpleCameraFollow.RequestShake(0.4f, 0.45f);
-            SimpleCameraFollow.RequestHitstop(0.05f);
+            if (TryCleaveDamage())
+            {
+                cleaveDamageDealt = true;
+            }
+        }
+
+        if (Time.time >= stateEndsAt)
+        {
+            if (phase == Phase.Two)
+            {
+                float facingSign = facingDirection;
+                BossShockwave.Spawn(new Vector2(transform.position.x + facingSign * 1.4f, floorY + 0.4f), facingSign);
+            }
             state = AttackState.Exposed;
             stateEndsAt = Time.time + ExposedDuration;
         }
+    }
+
+    private bool TryCleaveDamage()
+    {
+        if (player == null || Time.time < nextTouchTime)
+        {
+            return false;
+        }
+
+        float facingSign = facingDirection;
+        Vector2 hitCenter = new(transform.position.x + facingSign * 2.5f, floorY + 1.5f);
+        Vector2 playerPos = player.transform.position;
+
+        if (Mathf.Abs(playerPos.x - hitCenter.x) <= 2.0f &&
+            Mathf.Abs(playerPos.y - hitCenter.y) <= 2.0f)
+        {
+            nextTouchTime = Time.time + 0.7f;
+            SimpleCameraFollow.RequestHitstop(0.06f);
+            SimpleCameraFollow.RequestShake(0.28f, 0.32f);
+            player.TakeDamage(1, transform.position);
+            return true;
+        }
+        return false;
     }
 
     private void TickExposed()
@@ -328,15 +364,15 @@ public class BossController : MonoBehaviour, IWaterReactive
         Vector3 position = transform.position;
         position.x += dashSign * DashSpeed * Time.deltaTime;
 
-        if (position.x <= arenaLeftBound + 1.1f)
+        if (position.x <= arenaLeftBound + 2.4f)
         {
-            position.x = arenaLeftBound + 1.1f;
+            position.x = arenaLeftBound + 2.4f;
             dashSign = 1f;
             dashesRemaining--;
         }
-        else if (position.x >= arenaRightBound - 1.1f)
+        else if (position.x >= arenaRightBound - 2.4f)
         {
-            position.x = arenaRightBound - 1.1f;
+            position.x = arenaRightBound - 2.4f;
             dashSign = -1f;
             dashesRemaining--;
         }
@@ -360,7 +396,7 @@ public class BossController : MonoBehaviour, IWaterReactive
         state = AttackState.Idle;
         nextActionAt = Time.time + 1.1f;
         nextSummonAt = Time.time + 4f;
-        gameState?.ShowTransientMessage("The warden seethes. Tide answers harder.", 2.4f);
+        gameState?.ShowTransientMessage("The demon snarls. Embers trail every swing.", 2.4f);
     }
 
     private void SpawnMiniSentry()
@@ -391,13 +427,14 @@ public class BossController : MonoBehaviour, IWaterReactive
     private void DefeatBoss()
     {
         phase = Phase.Defeated;
+        bodyCollider.enabled = false;
         GameAudioController.Play(AudioCue.BossDefeated);
         SimpleCameraFollow.RequestHitstop(0.2f);
         SimpleCameraFollow.RequestShake(0.7f, 0.95f);
         WaterBurstVisual.Spawn(transform.position, new Vector2(2.6f, 1.8f), 1f);
         WaterBurstVisual.Spawn(transform.position, new Vector2(2.6f, 1.8f), -1f);
         gameState?.NotifyBossDefeated();
-        Destroy(gameObject);
+        Destroy(gameObject, 1.7f);
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -417,11 +454,17 @@ public class BossController : MonoBehaviour, IWaterReactive
             return;
         }
 
+        // Only damage on contact during a dash. Standing next to the boss is safe;
+        // damage in front of the boss comes from TryCleaveDamage during the cleave swing.
+        if (state != AttackState.Dashing)
+        {
+            return;
+        }
+
         if (other.TryGetComponent(out PlayerController hitPlayer))
         {
-            int damage = state == AttackState.Dashing ? 2 : 1;
-            nextTouchTime = Time.time + (state == AttackState.Dashing ? 0.55f : 0.8f);
-            hitPlayer.TakeDamage(damage, transform.position);
+            nextTouchTime = Time.time + 0.55f;
+            hitPlayer.TakeDamage(2, transform.position);
         }
     }
 }

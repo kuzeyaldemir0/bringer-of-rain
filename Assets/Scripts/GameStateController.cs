@@ -409,10 +409,10 @@ public class GameStateController : MonoBehaviour
             "CHAPTER III\n\n" +
             "WARDEN'S COURT\n\n" +
             "It is stun-immune.\n" +
-            "It will only bleed when its slam exposes it.";
+            "It will only bleed when its cleave leaves it open.";
         showCenterMessage = true;
         centerMessageExpiresAt = Time.unscaledTime + 4.2f;
-        hintText = "Dodge the shockwaves. Strike during the warden's expose window. Stay mobile.";
+        hintText = "Dodge the cleave. Strike during the warden's recovery. Stay mobile.";
         UpdateObjective();
     }
 
