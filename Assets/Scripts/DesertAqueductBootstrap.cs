@@ -235,17 +235,12 @@ public class DesertAqueductBootstrap : MonoBehaviour
         CreateSolid("CourtCeiling", new Vector2(arenaCenterX, 4.4f), new Vector2(22f, 0.6f), courtPillar);
         CreateTiledOverlay("CourtCeilingTiles", new Vector2(arenaCenterX, 4.4f), new Vector2(22f, 0.6f), "Tiles/PalmIsland", 4, 2);
 
-        CreateHazard("CourtKillPlane", new Vector2(arenaCenterX, -18f), new Vector2(28f, 4f), true);
+        // Kill plane lives well below the depths so falling off a platform respawns at the chapter 3 checkpoint.
+        CreateHazard("CourtKillPlane", new Vector2(120f, -50f), new Vector2(80f, 4f), true);
 
-        // Post-boss "depths" area below the court floor. Player drops in once the afterbossgate is destroyed.
-        Color depthsBackdrop = new(0.06f, 0.04f, 0.10f, 1f);
-        Color depthsFloor = new(0.10f, 0.06f, 0.14f, 1f);
-        Color depthsWall = new(0.22f, 0.12f, 0.24f, 1f);
-        CreateVisual("DepthsBackdrop", new Vector2(98f, -10f), new Vector2(30f, 10f), depthsBackdrop, false, -16);
-        CreateSolid("DepthsFloor", new Vector2(98f, -12.5f), new Vector2(26f, 1f), depthsFloor);
-        CreateSolid("DepthsLeftWall", new Vector2(85f, -8.5f), new Vector2(1f, 7f), depthsWall);
-        CreateSolid("DepthsRightWall", new Vector2(111f, -8.5f), new Vector2(1f, 7f), depthsWall);
-        CreateExit("DepthsExit", new Vector2(108f, -10.4f), new Vector2(2f, 2f), ExitTrigger.ExitMode.CompleteRun);
+        // Post-boss depths layout (ported from LevelBlockoutGenerator), mirrored east of the gate.
+        BuildPostBossDepths(99f, -7f);
+        CreateExit("DepthsExit", new Vector2(147f, -17.5f), new Vector2(2f, 2f), ExitTrigger.ExitMode.CompleteRun);
 
         CreateCheckpoint(new Vector2(85.4f, -3.7f), chapterThreeSpawn);
         CreateStorySign(
@@ -648,6 +643,110 @@ public class DesertAqueductBootstrap : MonoBehaviour
 
         ExitTrigger exitTrigger = exitRoot.AddComponent<ExitTrigger>();
         exitTrigger.Configure(gameState, exitMode);
+    }
+
+    private void BuildPostBossDepths(float originX, float originY)
+    {
+        Color depthsBackdrop = new(0.06f, 0.04f, 0.10f, 1f);
+        Color depthsFloor = new(0.18f, 0.13f, 0.22f, 1f);
+        Color depthsWall = new(0.34f, 0.18f, 0.36f, 1f);
+        Color depthsPlatform = new(0.22f, 0.15f, 0.26f, 1f);
+        Color depthsDoor = new(0.62f, 0.36f, 0.18f, 1f);
+
+        CreateVisual("DepthsBackdrop", new Vector2(originX + 25f, originY - 17f), new Vector2(60f, 38f), depthsBackdrop, false, -16);
+
+        // Local helpers: mirror X (eastward), translate by origin, then build with palm-island tiles.
+        void Slab(string name, float x, float y, float w, float h, Color color)
+        {
+            CreateBlockoutSurface(name, new Vector2(originX - x, originY + y), new Vector2(w, h), color);
+        }
+
+        void OneWay(string name, float x, float y, float w, float h, Color color)
+        {
+            CreateOneWayPlatform(name, new Vector2(originX - x, originY + y), new Vector2(w, h), color);
+        }
+
+        // Start area (where the player drops in)
+        Slab("Depths_StartRightWall", 2f, -6f, 1f, 13f, depthsWall);
+        Slab("Depths_StartLeftWall", -2f, -3.76f, 1f, 11f, depthsWall);
+
+        // Corridor 1 with pit and one-way platform
+        Slab("Depths_Corr1Ceiling", -6f, -8.83f, 9f, 1f, depthsWall);
+        Slab("Depths_Corr1FloorRight", 0f, -12f, 5f, 1f, depthsFloor);
+        Slab("Depths_Corr1FloorLeft", -9f, -12f, 3f, 1f, depthsFloor);
+        Slab("Depths_Corr1PitRightWall", -2.5f, -13f, 1f, 3f, depthsWall);
+        Slab("Depths_Corr1PitLeftWall", -7.5f, -13f, 1f, 3f, depthsWall);
+        Slab("Depths_Corr1PitFloor", -5f, -15f, 6f, 1f, depthsFloor);
+        OneWay("Depths_Corr1PitOneWay", -5f, -13.5f, 2f, 0.5f, depthsPlatform);
+
+        // Central chamber walls + ceiling + floor
+        Slab("Depths_CentralCeiling", -18f, -4.66f, 17f, 1f, depthsWall);
+        Slab("Depths_CentralRightWallUpper", -10f, -6.71f, 1f, 5f, depthsWall);
+        Slab("Depths_CentralLeftWallUpper", -26f, -7.07f, 1f, 5f, depthsWall);
+        Slab("Depths_CentralRightWallLower", -10f, -21f, 1f, 19f, depthsWall);
+        Slab("Depths_CentralLeftWallLower", -26f, -21f, 1f, 19f, depthsWall);
+        Slab("Depths_CentralFloor", -18f, -31f, 17f, 1f, depthsFloor);
+
+        // Climbing platforms in the central chamber
+        Slab("Depths_PlatColA1", -22.97f, -14.02f, 4f, 0.5f, depthsPlatform);
+        Slab("Depths_PlatColB1", -13.08f, -14.05f, 4f, 0.5f, depthsPlatform);
+        Slab("Depths_PlatColA2", -23.01f, -18.68f, 4f, 0.5f, depthsPlatform);
+        Slab("Depths_PlatColB2", -13.12f, -18.71f, 4f, 0.5f, depthsPlatform);
+        Slab("Depths_PlatColA3", -22.88f, -23.16f, 4f, 0.5f, depthsPlatform);
+        Slab("Depths_PlatColB3", -12.99f, -23.19f, 4f, 0.5f, depthsPlatform);
+        Slab("Depths_PlatColA4", -22.84f, -27.73f, 4f, 0.5f, depthsPlatform);
+        Slab("Depths_PlatColB4", -12.95f, -27.76f, 4f, 0.5f, depthsPlatform);
+        Slab("Depths_PlatColC4", -21f, -29.31f, 4f, 0.5f, depthsPlatform);
+        Slab("Depths_PlatColD4", -15.51f, -29.33f, 4f, 0.5f, depthsPlatform);
+        Slab("Depths_PlatColC3", -21.04f, -24.74f, 4f, 0.5f, depthsPlatform);
+        Slab("Depths_PlatColD3", -15.55f, -24.76f, 4f, 0.5f, depthsPlatform);
+        Slab("Depths_PlatColC2", -21.17f, -20.26f, 4f, 0.5f, depthsPlatform);
+        Slab("Depths_PlatColD2", -15.68f, -20.28f, 4f, 0.5f, depthsPlatform);
+        Slab("Depths_PlatColC1", -21.13f, -15.6f, 4f, 0.5f, depthsPlatform);
+        Slab("Depths_PlatColD1", -15.64f, -15.62f, 4f, 0.5f, depthsPlatform);
+        Slab("Depths_PlatWide1", -17.995f, -12.32f, 13.031f, 0.5f, depthsPlatform);
+        Slab("Depths_PlatWide2", -18.035f, -16.98f, 13.031f, 0.5f, depthsPlatform);
+        Slab("Depths_PlatWide3", -17.905f, -21.46f, 13.031f, 0.5f, depthsPlatform);
+        Slab("Depths_PlatWide4", -17.865f, -26.03f, 13.031f, 0.5f, depthsPlatform);
+
+        // Corridor 2 leading to the breakable door
+        Slab("Depths_Corr2Ceiling", -28.5f, -9.22f, 6f, 1f, depthsWall);
+        Slab("Depths_Corr2Floor", -38.386f, -12f, 25.773f, 1f, depthsFloor);
+        CreateBreakableBarrier("Depths_BreakableDoor", new Vector2(originX - (-28.5f), originY + (-10.56f)), new Vector2(0.5f, 2f), depthsDoor);
+
+        // Sealed final chamber (FarLeft in the original blockout = far east here)
+        Slab("Depths_FarCeiling", -41f, -4.12f, 20f, 1f, depthsWall);
+        Slab("Depths_FarNearWall", -31f, -6.52f, 1f, 6f, depthsWall);
+        Slab("Depths_FarEndWall", -51f, -8.444f, 1f, 7.888f, depthsWall);
+    }
+
+    private void CreateBlockoutSurface(string objectName, Vector2 position, Vector2 size, Color color)
+    {
+        CreateSolid(objectName, position, size, color);
+        bool vertical = size.y > size.x;
+        int column = vertical ? 4 : 1;
+        int row = vertical ? 2 : 0;
+        CreateTiledOverlay(objectName + "Tiles", position, size, "Tiles/PalmIsland", column, row);
+    }
+
+    private void CreateBreakableBarrier(string objectName, Vector2 position, Vector2 size, Color color)
+    {
+        GameObject doorObject = new(objectName);
+        doorObject.transform.SetParent(worldRoot, false);
+        doorObject.transform.position = new Vector3(position.x, position.y, 0f);
+        doorObject.layer = GroundLayer;
+
+        SpriteRenderer doorRenderer = doorObject.AddComponent<SpriteRenderer>();
+        doorRenderer.sprite = PrimitiveSpriteLibrary.SquareSprite;
+        doorRenderer.color = color;
+        doorRenderer.drawMode = SpriteDrawMode.Sliced;
+        doorRenderer.size = size;
+        doorRenderer.sortingOrder = 5;
+
+        BoxCollider2D doorCollider = doorObject.AddComponent<BoxCollider2D>();
+        doorCollider.size = size;
+
+        doorObject.AddComponent<BreakableDoor>();
     }
 
     private TextMesh CreateWorldText(Transform parent, string content, Vector2 localPosition, float characterSize, TextAlignment alignment)

@@ -220,18 +220,15 @@ public class IceSpearProjectile : MonoBehaviour
             return false;
         }
 
-        if (targetObject.TryGetComponent(out EnemyPatrol enemy))
+        MonoBehaviour[] behaviours = targetObject.GetComponents<MonoBehaviour>();
+        foreach (MonoBehaviour behaviour in behaviours)
         {
-            reactive = enemy;
-            return true;
+            if (behaviour is IWaterReactive r)
+            {
+                reactive = r;
+                return true;
+            }
         }
-
-        if (targetObject.TryGetComponent(out BossController boss))
-        {
-            reactive = boss;
-            return true;
-        }
-
         return false;
     }
 
