@@ -367,49 +367,52 @@ public class GameStateController : MonoBehaviour
         GUI.Box(new Rect(12f, 12f, 600f, 60f), GUIContent.none, panelStyle);
         GUI.Label(new Rect(24f, 20f, 580f, 44f), objectiveText, hudStyle);
 
+        const float barX = 24f;
+        const float hpY = 20f;
+        float hpHeight = 0f;
+        float barGap = 0f;
+
         // Draw Health Bar
         if (healthBarTexture != null)
         {
-            float hpWidth = 240f;
-            float hpHeight = hpWidth * (healthBarTexture.height / (float)healthBarTexture.width);
-            float currentHpPercent = 1f;
+            float hpWidth = 480f;
+            hpHeight = hpWidth * (healthBarTexture.height / (float)healthBarTexture.width);
 
             int hpIndex = Mathf.Clamp(currentHealth, 0, 6);
             float[] hpClipWidths = { 320f, 420f, 520f, 620f, 720f, 820f, 1000f };
-            float targetClip = hpClipWidths[hpIndex];
-            currentHpPercent = targetClip / 1000f;
+            float currentHpPercent = hpClipWidths[hpIndex] / 1000f;
 
-            // Draw dark background bar
             GUI.color = new Color(0.1f, 0.1f, 0.1f, 0.8f);
-            GUI.DrawTexture(new Rect(24f, 20f, hpWidth, hpHeight), healthBarTexture);
-            
-            // Draw filled bar
+            GUI.DrawTexture(new Rect(barX, hpY, hpWidth, hpHeight), healthBarTexture);
+
             GUI.color = Color.white;
-            GUI.BeginGroup(new Rect(24f, 20f, hpWidth * currentHpPercent, hpHeight));
-            GUI.DrawTexture(new Rect(0, 0, hpWidth, hpHeight), healthBarTexture);
+            GUI.BeginGroup(new Rect(barX, hpY, hpWidth * currentHpPercent, hpHeight));
+            GUI.DrawTexture(new Rect(0f, 0f, hpWidth, hpHeight), healthBarTexture);
             GUI.EndGroup();
+
+            // Pull MP rect up into HP's transparent padding so the visible
+            // star art lands just under the visible chevron art.
+            barGap = -hpHeight * 0.30f;
         }
 
-        // Draw Mana Bar
+        // Draw Mana Bar (stacked directly under HP, same left edge)
         if (manaBarTexture != null)
         {
-            float mpWidth = 120f;
+            float mpWidth = 240f;
             float mpHeight = mpWidth * (manaBarTexture.height / (float)manaBarTexture.width);
-            float currentMpPercent = 1f;
+            float mpX = barX + 40f;
+            float mpY = hpY + hpHeight + barGap;
 
             int mpIndex = Mathf.Clamp(currentMana, 0, 3);
             float[] mpClipWidths = { 0f, 185f, 300f, 454f };
-            float targetClip = mpClipWidths[mpIndex];
-            currentMpPercent = targetClip / 454f;
+            float currentMpPercent = mpClipWidths[mpIndex] / 454f;
 
-            // Draw dark background stars
             GUI.color = new Color(0.1f, 0.1f, 0.1f, 0.8f);
-            GUI.DrawTexture(new Rect(48f, 180f, mpWidth, mpHeight), manaBarTexture);
-            
-            // Draw filled stars
+            GUI.DrawTexture(new Rect(mpX, mpY, mpWidth, mpHeight), manaBarTexture);
+
             GUI.color = Color.white;
-            GUI.BeginGroup(new Rect(48f, 180f, mpWidth * currentMpPercent, mpHeight));
-            GUI.DrawTexture(new Rect(0, 0, mpWidth, mpHeight), manaBarTexture);
+            GUI.BeginGroup(new Rect(mpX, mpY, mpWidth * currentMpPercent, mpHeight));
+            GUI.DrawTexture(new Rect(0f, 0f, mpWidth, mpHeight), manaBarTexture);
             GUI.EndGroup();
         }
 
