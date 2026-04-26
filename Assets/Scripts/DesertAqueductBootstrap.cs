@@ -220,8 +220,14 @@ public class DesertAqueductBootstrap : MonoBehaviour
         CreateVisual("CourtBackdrop", new Vector2(arenaCenterX, -0.6f), new Vector2(50f, 22f), courtBackdrop, false, -16);
         CreateVisual("CourtAccent", new Vector2(arenaCenterX, 3.4f), new Vector2(20f, 0.18f), courtAccent, false, -12);
 
-        CreateSolid("CourtFloor", new Vector2(arenaCenterX, -4.5f), new Vector2(22f, 1f), courtFloor);
-        CreateTiledOverlay("CourtFloorTiles", new Vector2(arenaCenterX, -4.5f), new Vector2(22f, 1f), "Tiles/PalmIsland", 1, 0);
+        // Floor split into two pieces with a 3-unit gap at x=99 for the afterbossgate.
+        // Gate fills the gap during the fight; destroyed in NotifyBossDefeated to open a hole into the depths below.
+        CreateSolid("CourtFloorLeft", new Vector2(90.25f, -4.5f), new Vector2(14.5f, 1f), courtFloor);
+        CreateTiledOverlay("CourtFloorLeftTiles", new Vector2(90.25f, -4.5f), new Vector2(14.5f, 1f), "Tiles/PalmIsland", 1, 0);
+        CreateSolid("CourtFloorRight", new Vector2(102.75f, -4.5f), new Vector2(4.5f, 1f), courtFloor);
+        CreateTiledOverlay("CourtFloorRightTiles", new Vector2(102.75f, -4.5f), new Vector2(4.5f, 1f), "Tiles/PalmIsland", 1, 0);
+        Color afterBossGateColor = new(0.62f, 0.36f, 0.18f, 1f);
+        CreateSolid("afterbossgate", new Vector2(99f, -4.5f), new Vector2(3f, 1f), afterBossGateColor);
         CreateSolid("CourtLeftWall", new Vector2(arenaLeftBound - 0.5f, -1f), new Vector2(1f, 9f), courtPillar);
         CreateTiledOverlay("CourtLeftWallTiles", new Vector2(arenaLeftBound - 0.5f, -1f), new Vector2(1f, 9f), "Tiles/PalmIsland", 4, 2);
         CreateSolid("CourtRightWall", new Vector2(arenaRightBound + 0.5f, -1f), new Vector2(1f, 9f), courtPillar);
@@ -230,6 +236,16 @@ public class DesertAqueductBootstrap : MonoBehaviour
         CreateTiledOverlay("CourtCeilingTiles", new Vector2(arenaCenterX, 4.4f), new Vector2(22f, 0.6f), "Tiles/PalmIsland", 4, 2);
 
         CreateHazard("CourtKillPlane", new Vector2(arenaCenterX, -18f), new Vector2(28f, 4f), true);
+
+        // Post-boss "depths" area below the court floor. Player drops in once the afterbossgate is destroyed.
+        Color depthsBackdrop = new(0.06f, 0.04f, 0.10f, 1f);
+        Color depthsFloor = new(0.10f, 0.06f, 0.14f, 1f);
+        Color depthsWall = new(0.22f, 0.12f, 0.24f, 1f);
+        CreateVisual("DepthsBackdrop", new Vector2(98f, -10f), new Vector2(30f, 10f), depthsBackdrop, false, -16);
+        CreateSolid("DepthsFloor", new Vector2(98f, -12.5f), new Vector2(26f, 1f), depthsFloor);
+        CreateSolid("DepthsLeftWall", new Vector2(85f, -8.5f), new Vector2(1f, 7f), depthsWall);
+        CreateSolid("DepthsRightWall", new Vector2(111f, -8.5f), new Vector2(1f, 7f), depthsWall);
+        CreateExit("DepthsExit", new Vector2(108f, -10.4f), new Vector2(2f, 2f), ExitTrigger.ExitMode.CompleteRun);
 
         CreateCheckpoint(new Vector2(85.4f, -3.7f), chapterThreeSpawn);
         CreateStorySign(

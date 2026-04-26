@@ -6,7 +6,8 @@ public class ExitTrigger : MonoBehaviour
     public enum ExitMode
     {
         AdvanceChapter,
-        FinalSeal
+        FinalSeal,
+        CompleteRun
     }
 
     private GameStateController gameState;
@@ -39,6 +40,12 @@ public class ExitTrigger : MonoBehaviour
         if (exitMode == ExitMode.FinalSeal)
         {
             gameState.ReachTidalSeal();
+            return;
+        }
+
+        if (exitMode == ExitMode.CompleteRun)
+        {
+            gameState.CompleteGame();
             return;
         }
 

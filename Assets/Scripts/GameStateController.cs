@@ -198,7 +198,8 @@ public class GameStateController : MonoBehaviour
             Destroy(gate);
         }
 
-        CompleteGame();
+        SimpleCameraFollow.SetHorizontalLimits(new Vector2(82f, 112f));
+        ShowTransientMessage("The seal cracks. The depths await.", 2.4f);
     }
 
     public void CompleteGame()
