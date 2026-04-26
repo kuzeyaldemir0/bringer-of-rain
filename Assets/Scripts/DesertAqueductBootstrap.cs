@@ -93,7 +93,7 @@ public class DesertAqueductBootstrap : MonoBehaviour
 
     private void BuildBackdrop()
     {
-        AddTextureBackdrop("DesertScene", "Backgrounds/DesertScene", new Vector2(20f, 1.5f), new Vector2(80f, 22f), -19, 1f);
+        CreateVisual("CleanDesertSky", new Vector2(44f, 0.8f), new Vector2(120f, 47f), new Color(0.78f, 0.66f, 0.44f, 1f), false, -22);
     }
 
     private void BuildLevelGeometry()
@@ -130,6 +130,10 @@ public class DesertAqueductBootstrap : MonoBehaviour
         CreateSolid("ReservoirWalkway", new Vector2(48.25f, -3.6f), new Vector2(4.5f, 0.7f), SandColor);
         CreateTiledOverlay("ReservoirWalkwayTiles", new Vector2(48.25f, -3.6f), new Vector2(4.5f, 0.7f), "Tiles/PalmIsland", 1, 0);
 
+        CreateElder(new Vector2(-4.25f, -3.0f));
+        CreateDesertProp("EntryCactus", new Vector2(7.2f, -3.2f), 11, 5, new Vector2(1.3f, 2.2f));
+        CreateDesertProp("LowerBarrel", new Vector2(47.8f, -3.05f), 14, 5, new Vector2(1.0f, 1.25f));
+
         CreateEnemy("SentryScout", new Vector2(4.5f, -3.42f), 2.6f, 6.8f, 1.45f, "MaskDude");
         CreateEnemy("SentryA", new Vector2(19.5f, -9.42f), 17.2f, 21.4f, 1.8f, "MaskDude");
         CreateEnemy("SentryB", new Vector2(26.2f, -9.42f), 24.5f, 28f, 1.95f, "MaskDude");
@@ -146,7 +150,7 @@ public class DesertAqueductBootstrap : MonoBehaviour
             new Vector2(10.5f, -3.0f),
             "DECREE",
             "Pumps below.\nValves twin.",
-            "The cracked spillway drops into the lower pumps. Restore both valves to open the reservoir gate beyond.",
+            "Two valves are sealed below.\n\nDrop through the broken spillway. Restore both valves. Then return to the reservoir gate.",
             new Vector2(3.4f, 3f));
 
         CreateExit("ReservoirGate", new Vector2(49.5f, -1.1f), new Vector2(2.2f, 3.4f), ExitTrigger.ExitMode.AdvanceChapter);
@@ -179,7 +183,6 @@ public class DesertAqueductBootstrap : MonoBehaviour
         CreateHazard("VaultSpikesA", new Vector2(64.3f, -4.03f), new Vector2(2.4f, 0.7f), false);
         CreateHazard("VaultSpikesB", new Vector2(72.2f, -4.03f), new Vector2(2.1f, 0.7f), false);
 
-        CreateEnemy("VaultHunterA", new Vector2(57f, -3.42f), 54.6f, 59.6f, 2.15f, "NinjaFrog", 1.35f);
         CreateEnemy("VaultCrusherA", new Vector2(63.4f, -3.42f), 61.2f, 66.2f, 2.25f, "MaskDude", 1.55f);
         CreateEnemy("VaultHunterB", new Vector2(70.5f, -3.42f), 68.8f, 73.0f, 2.4f, "NinjaFrog", 1.7f);
         CreateEnemy("VaultCrusherB", new Vector2(72.1f, -3.42f), 71.2f, 73.0f, 2.5f, "MaskDude", 1.82f);
@@ -189,7 +192,7 @@ public class DesertAqueductBootstrap : MonoBehaviour
             new Vector2(56.2f, -3.0f),
             "VAULT",
             "Flooded below.\nTeeth ahead.",
-            "Chapter II: the drowned vault. These wardens strike harder and dash faster.",
+            "The vault is still guarded.\n\nMove carefully. The wardens hit harder here. Reach the tidal seal at the far end.",
             new Vector2(3.4f, 3f));
 
         CreateExit("TidalSeal", new Vector2(76.2f, 1.45f), new Vector2(2.1f, 3.2f), ExitTrigger.ExitMode.FinalSeal);
@@ -220,8 +223,8 @@ public class DesertAqueductBootstrap : MonoBehaviour
         CreateVisual("CourtBackdrop", new Vector2(arenaCenterX, -0.6f), new Vector2(50f, 22f), courtBackdrop, false, -16);
         CreateVisual("CourtAccent", new Vector2(arenaCenterX, 3.4f), new Vector2(20f, 0.18f), courtAccent, false, -12);
 
-        // Floor split into two pieces with a 3-unit gap at x=99 for the afterbossgate.
-        // Gate fills the gap during the fight; destroyed in NotifyBossDefeated to open a hole into the depths below.
+        // Floor split into two pieces with a 3-unit gate marker at x=99.
+        // The current jam ending resolves immediately after the boss, so no post-boss route is built.
         CreateSolid("CourtFloorLeft", new Vector2(90.25f, -4.5f), new Vector2(14.5f, 1f), courtFloor);
         CreateTiledOverlay("CourtFloorLeftTiles", new Vector2(90.25f, -4.5f), new Vector2(14.5f, 1f), "Tiles/PalmIsland", 1, 0);
         CreateSolid("CourtFloorRight", new Vector2(102.75f, -4.5f), new Vector2(4.5f, 1f), courtFloor);
@@ -235,19 +238,15 @@ public class DesertAqueductBootstrap : MonoBehaviour
         CreateSolid("CourtCeiling", new Vector2(arenaCenterX, 4.4f), new Vector2(22f, 0.6f), courtPillar);
         CreateTiledOverlay("CourtCeilingTiles", new Vector2(arenaCenterX, 4.4f), new Vector2(22f, 0.6f), "Tiles/PalmIsland", 4, 2);
 
-        // Kill plane lives well below the depths so falling off a platform respawns at the chapter 3 checkpoint.
+        // Kill plane lives well below the court so falling out of the arena respawns at the chapter 3 checkpoint.
         CreateHazard("CourtKillPlane", new Vector2(120f, -50f), new Vector2(80f, 4f), true);
-
-        // Post-boss depths layout (ported from LevelBlockoutGenerator), mirrored east of the gate.
-        BuildPostBossDepths(99f, -7f);
-        CreateExit("DepthsExit", new Vector2(147f, -17.5f), new Vector2(2f, 2f), ExitTrigger.ExitMode.CompleteRun);
 
         CreateCheckpoint(new Vector2(85.4f, -3.7f), chapterThreeSpawn);
         CreateStorySign(
             new Vector2(86.5f, -3.0f),
             "WARDEN",
             "Stun-immune.\nStrike during recovery.",
-            "The warden of the drowned vault. Strike only when its guard breaks.",
+            "The demon cannot be stunned.\n\nDodge the cleave. Strike when it recovers.",
             new Vector2(3.4f, 3f));
 
         BuildBoss(new Vector2(arenaCenterX, -2f), arenaLeftBound, arenaRightBound, arenaFloorY);
@@ -303,6 +302,7 @@ public class DesertAqueductBootstrap : MonoBehaviour
 
     private void CreateTiledOverlay(string objectName, Vector2 position, Vector2 worldSize, string sheetPath, int column, int row, int tilePixelSize = 32, int sortingOrder = 6)
     {
+        ResolveDesertTile(objectName, ref sheetPath, ref column, ref row);
         Sprite tile = TileSheetSlicer.GetTile(sheetPath, column, row, tilePixelSize, tilePixelSize, tilePixelSize);
         if (tile == null)
         {
@@ -321,6 +321,33 @@ public class DesertAqueductBootstrap : MonoBehaviour
         renderer.sortingOrder = sortingOrder;
     }
 
+    private static void ResolveDesertTile(string objectName, ref string sheetPath, ref int column, ref int row)
+    {
+        if (sheetPath != "Tiles/PalmIsland")
+        {
+            return;
+        }
+
+        bool isWall = objectName.Contains("Wall") ||
+                      objectName.Contains("Boundary") ||
+                      objectName.Contains("Column") ||
+                      objectName.Contains("Lip") ||
+                      objectName.Contains("Pedestal") ||
+                      objectName.Contains("Ceiling");
+
+        if (objectName.Contains("Vault") || objectName.Contains("Court"))
+        {
+            sheetPath = "Desert/BrickTiles";
+            column = isWall ? 1 : 1;
+            row = isWall ? 0 : 1;
+            return;
+        }
+
+        sheetPath = "Desert/MainTiles";
+        column = isWall ? 0 : 2;
+        row = isWall ? 2 : 0;
+    }
+
     private void AddTextureBackdrop(string objectName, string resourcePath, Vector2 position, Vector2 targetSize, int sortingOrder, float alpha, float pixelsPerUnit = 16f)
     {
         Sprite sprite = GetBackdropSprite(resourcePath, pixelsPerUnit);
@@ -328,6 +355,38 @@ public class DesertAqueductBootstrap : MonoBehaviour
         {
             return;
         }
+
+        GameObject backdrop = new(objectName);
+        backdrop.transform.SetParent(worldRoot, false);
+        backdrop.transform.position = new Vector3(position.x, position.y, 0f);
+
+        float spriteWidth = sprite.bounds.size.x;
+        float spriteHeight = sprite.bounds.size.y;
+        float scaleX = spriteWidth > 0f ? targetSize.x / spriteWidth : 1f;
+        float scaleY = spriteHeight > 0f ? targetSize.y / spriteHeight : 1f;
+        backdrop.transform.localScale = new Vector3(scaleX, scaleY, 1f);
+
+        SpriteRenderer renderer = backdrop.AddComponent<SpriteRenderer>();
+        renderer.sprite = sprite;
+        renderer.color = new Color(1f, 1f, 1f, alpha);
+        renderer.sortingOrder = sortingOrder;
+    }
+
+    private void AddTextureRegionBackdrop(string objectName, string resourcePath, Rect normalizedTopLeftRect, Vector2 position, Vector2 targetSize, int sortingOrder, float alpha, float pixelsPerUnit = 32f)
+    {
+        Texture2D texture = Resources.Load<Texture2D>(resourcePath);
+        if (texture == null)
+        {
+            return;
+        }
+
+        texture.filterMode = FilterMode.Point;
+        float x = Mathf.Clamp(normalizedTopLeftRect.x * texture.width, 0f, texture.width - 1f);
+        float yTop = Mathf.Clamp(normalizedTopLeftRect.y * texture.height, 0f, texture.height - 1f);
+        float width = Mathf.Clamp(normalizedTopLeftRect.width * texture.width, 1f, texture.width - x);
+        float height = Mathf.Clamp(normalizedTopLeftRect.height * texture.height, 1f, texture.height - yTop);
+        Rect unityRect = new(x, texture.height - yTop - height, width, height);
+        Sprite sprite = Sprite.Create(texture, unityRect, new Vector2(0.5f, 0.5f), pixelsPerUnit, 0, SpriteMeshType.FullRect);
 
         GameObject backdrop = new(objectName);
         backdrop.transform.SetParent(worldRoot, false);
@@ -469,6 +528,54 @@ public class DesertAqueductBootstrap : MonoBehaviour
 
         CreateChildVisual(enemyObject.transform, "GroundShadow", new Vector2(0f, -0.38f), new Vector2(0.7f, 0.12f), new Color(0.11f, 0.08f, 0.06f, 0.22f), 8);
         CreateChildVisual(enemyObject.transform, "ThreatGlow", new Vector2(0f, -0.02f), new Vector2(0.66f, 0.9f), new Color(0.16f, 0.86f, 1f, 0.08f), 9);
+    }
+
+    private void CreateElder(Vector2 position)
+    {
+        GameObject elderObject = new("VillageElder");
+        elderObject.transform.SetParent(worldRoot, false);
+        elderObject.transform.position = position;
+        elderObject.transform.localScale = new Vector3(1.42f, 1.42f, 1f);
+        elderObject.layer = WaterLayer;
+
+        elderObject.AddComponent<SpriteRenderer>();
+        elderObject.AddComponent<VillagerSpriteAnimator>();
+
+        BoxCollider2D collider2D = elderObject.AddComponent<BoxCollider2D>();
+        collider2D.size = new Vector2(1.65f, 1.95f);
+        collider2D.offset = new Vector2(0f, 0.15f);
+        collider2D.isTrigger = true;
+
+        CreateChildVisual(elderObject.transform, "GroundShadow", new Vector2(0f, -0.72f), new Vector2(0.6f, 0.1f), new Color(0.11f, 0.08f, 0.06f, 0.28f), 8);
+
+        StoryTrigger trigger = elderObject.AddComponent<StoryTrigger>();
+        trigger.Configure(
+            gameState,
+            "VILLAGE ELDER",
+            "Please... the wells are dry. The fire demon took the water below the aqueduct.\n\nFind the old valves. Open the gate. Bring the rain back to us.",
+            true,
+            "Press W to listen");
+    }
+
+    private void CreateDesertProp(string objectName, Vector2 position, int column, int row, Vector2 size)
+    {
+        Sprite sprite = TileSheetSlicer.GetTile("Desert/MainTiles", column, row, 32, 32, 32f);
+        if (sprite == null)
+        {
+            return;
+        }
+
+        GameObject prop = new(objectName);
+        prop.transform.SetParent(worldRoot, false);
+        prop.transform.position = new Vector3(position.x, position.y, 0f);
+
+        float scaleX = sprite.bounds.size.x > 0f ? size.x / sprite.bounds.size.x : 1f;
+        float scaleY = sprite.bounds.size.y > 0f ? size.y / sprite.bounds.size.y : 1f;
+        prop.transform.localScale = new Vector3(scaleX, scaleY, 1f);
+
+        SpriteRenderer renderer = prop.AddComponent<SpriteRenderer>();
+        renderer.sprite = sprite;
+        renderer.sortingOrder = 7;
     }
 
     private void CreateValve(string objectName, Vector2 position, string label)
@@ -621,7 +728,7 @@ public class DesertAqueductBootstrap : MonoBehaviour
         collider2D.size = triggerSize;
 
         StoryTrigger storyTrigger = sign.AddComponent<StoryTrigger>();
-        storyTrigger.Configure(gameState, triggerText, 3.5f, true);
+        storyTrigger.Configure(gameState, title, triggerText, true, "Press W to read");
     }
 
     private void CreateExit(string objectName, Vector2 position, Vector2 triggerSize, ExitTrigger.ExitMode exitMode = ExitTrigger.ExitMode.AdvanceChapter)
@@ -776,5 +883,85 @@ public class DesertAqueductBootstrap : MonoBehaviour
 
         renderer.sortingOrder = 7;
         return textMesh;
+    }
+}
+
+[RequireComponent(typeof(SpriteRenderer))]
+public class VillagerSpriteAnimator : MonoBehaviour
+{
+    private static readonly Dictionary<string, Sprite[]> CachedAnimations = new();
+
+    private SpriteRenderer spriteRenderer;
+    private Sprite[] activeFrames;
+    private float nextFrameAt;
+    private int frameIndex;
+
+    private const string ResourceFolder = "Villagers/OldMan";
+    private const int CellSize = 48;
+    private const float PixelsPerUnit = 34f;
+    private const float IdleFrameDuration = 0.28f;
+
+    private void Awake()
+    {
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        spriteRenderer.sortingOrder = 10;
+    }
+
+    private void Start()
+    {
+        activeFrames = LoadFrames("Idle");
+        frameIndex = 0;
+        spriteRenderer.sprite = activeFrames.Length > 0 ? activeFrames[0] : PrimitiveSpriteLibrary.SquareSprite;
+        nextFrameAt = Time.time + IdleFrameDuration;
+    }
+
+    private void Update()
+    {
+        if (activeFrames == null || activeFrames.Length == 0 || Time.time < nextFrameAt)
+        {
+            return;
+        }
+
+        frameIndex = (frameIndex + 1) % activeFrames.Length;
+        spriteRenderer.sprite = activeFrames[frameIndex];
+        nextFrameAt = Time.time + IdleFrameDuration;
+    }
+
+    private static Sprite[] LoadFrames(string clipName)
+    {
+        string cacheKey = $"{ResourceFolder}/{clipName}";
+        if (CachedAnimations.TryGetValue(cacheKey, out Sprite[] frames))
+        {
+            return frames;
+        }
+
+        Texture2D texture = Resources.Load<Texture2D>(cacheKey);
+        if (texture == null)
+        {
+            texture = Resources.Load<Texture2D>($"{ResourceFolder}/Still");
+        }
+
+        if (texture == null)
+        {
+            Debug.LogWarning($"Villager sprite sheet not found at Resources/{cacheKey}.");
+            frames = new[] { PrimitiveSpriteLibrary.SquareSprite };
+            CachedAnimations[cacheKey] = frames;
+            return frames;
+        }
+
+        texture.filterMode = FilterMode.Point;
+        int frameCount = Mathf.Max(1, texture.width / CellSize);
+        frames = new Sprite[frameCount];
+
+        for (int i = 0; i < frameCount; i++)
+        {
+            Rect rect = new(i * CellSize, 0f, CellSize, CellSize);
+            Sprite sprite = Sprite.Create(texture, rect, new Vector2(0.5f, 0.5f), PixelsPerUnit, 0, SpriteMeshType.FullRect);
+            sprite.name = $"OldMan_{clipName}_{i}";
+            frames[i] = sprite;
+        }
+
+        CachedAnimations[cacheKey] = frames;
+        return frames;
     }
 }

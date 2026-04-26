@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class GameStateController : MonoBehaviour
 {
@@ -15,7 +16,11 @@ public class GameStateController : MonoBehaviour
 
     private readonly List<GameObject> restoreObjects = new();
     private static readonly Color UiTextColor = new(0.09f, 0.11f, 0.13f, 1f);
-    private const string DefaultHintText = "Move A/D or Arrows   Jump Space   Burst F / Mouse 1 / Enter   Ice Spear hold/release Mouse 2";
+    private static readonly Color StoryTextColor = new(0.95f, 0.89f, 0.68f, 1f);
+    private static readonly Color StoryShadowColor = new(0.02f, 0.02f, 0.03f, 0.95f);
+    private static readonly Color RainColor = new(0.42f, 0.88f, 1f, 0.62f);
+    private const string DefaultHintText = "Move A/D or Arrows   Jump Space   Read W near signs   Burst F / Mouse 1 / Enter   Ice Spear hold/release Mouse 2";
+    private const float TypewriterCharactersPerSecond = 46f;
 
     private PlayerController player;
     private string healthText = "HP 6/6";
@@ -23,11 +28,25 @@ public class GameStateController : MonoBehaviour
     private string objectiveText = string.Empty;
     private string centerMessage = string.Empty;
     private string hintText = DefaultHintText;
+    private string interactionPrompt = string.Empty;
+    private string readableStoryTitle = string.Empty;
+    private string readableStoryBody = string.Empty;
+    private string trophyTitle = string.Empty;
+    private string trophySubtitle = string.Empty;
 
     private GUIStyle hudStyle;
     private GUIStyle hintStyle;
     private GUIStyle centerStyle;
     private GUIStyle panelStyle;
+    private GUIStyle fullScreenOverlayStyle;
+    private GUIStyle storyTitleStyle;
+    private GUIStyle storyBodyStyle;
+    private GUIStyle storyFooterStyle;
+    private GUIStyle promptStyle;
+    private GUIStyle trophyTitleStyle;
+    private GUIStyle trophyBodyStyle;
+    private Texture2D rainTexture;
+    private Font storyFont;
 
     private Vector3 checkpointPosition;
     private Vector3 chapterTwoSpawnPoint;
@@ -36,13 +55,25 @@ public class GameStateController : MonoBehaviour
     private GameObject gateBarrier;
     private GameObject chapterTwoRoot;
     private GameObject chapterThreeRoot;
+    private StoryTrigger activeReadableTrigger;
     private int totalValves;
     private int activatedValves;
+    private int readableVisibleCharacterCount;
     private float centerMessageExpiresAt;
     private float transitionTeleportAt;
+    private float readableStoryStartedAt;
+    private float rainStartedAt;
+    private float trophyExpiresAt;
 
     private bool introVisible;
     private bool showCenterMessage;
+    private bool readableStoryVisible;
+    private bool readableStoryFullyRevealed;
+    private bool readableStoryLocksInput;
+    private bool bossDefeated;
+    private bool rainActive;
+    private bool trophyVisible;
+    private bool trophyShown;
     private StoryPhase storyPhase;
 
     public bool CanExit { get; private set; }
@@ -54,7 +85,6 @@ public class GameStateController : MonoBehaviour
         storyPhase = StoryPhase.ChapterOne;
         BuildUi();
         UpdateObjective();
-        ShowIntro();
     }
 
     public void SetPlayer(PlayerController controlledPlayer)
@@ -62,6 +92,51 @@ public class GameStateController : MonoBehaviour
         player = controlledPlayer;
         UpdateHealth(player.CurrentHealth, player.MaxHealth);
         UpdateMana(player.CurrentManaFragments, player.MaxManaFragments);
+
+        if (readableStoryVisible && readableStoryLocksInput)
+        {
+            player.SetInputLocked(true);
+        }
+    }
+
+    public void SetReadableTarget(StoryTrigger trigger, string prompt)
+    {
+        if (trigger == null || ReadableStoriesBlocked)
+        {
+            return;
+        }
+
+        activeReadableTrigger = trigger;
+        interactionPrompt = string.IsNullOrWhiteSpace(prompt) ? "Press W to read" : prompt;
+    }
+
+    public void ClearReadableTarget(StoryTrigger trigger)
+    {
+        if (activeReadableTrigger != trigger)
+        {
+            return;
+        }
+
+        activeReadableTrigger = null;
+        interactionPrompt = string.Empty;
+    }
+
+    public void ShowReadableStory(string title, string body, bool lockPlayerInput)
+    {
+        HideCenterText();
+
+        readableStoryTitle = title ?? string.Empty;
+        readableStoryBody = body ?? string.Empty;
+        readableStoryVisible = true;
+        readableStoryFullyRevealed = readableStoryBody.Length == 0;
+        readableVisibleCharacterCount = readableStoryFullyRevealed ? readableStoryBody.Length : 0;
+        readableStoryStartedAt = Time.unscaledTime;
+        readableStoryLocksInput = lockPlayerInput;
+
+        if (lockPlayerInput)
+        {
+            player?.SetInputLocked(true);
+        }
     }
 
     public void ConfigureProgression(GameObject gateToDisable, IEnumerable<GameObject> objectsToEnable)
@@ -134,6 +209,11 @@ public class GameStateController : MonoBehaviour
 
     public void NotifyPlayerActivity()
     {
+        if (readableStoryVisible)
+        {
+            return;
+        }
+
         if (introVisible || (showCenterMessage && storyPhase != StoryPhase.Finished))
         {
             HideCenterText();
@@ -192,14 +272,10 @@ public class GameStateController : MonoBehaviour
             return;
         }
 
-        GameObject gate = GameObject.Find("afterbossgate");
-        if (gate != null)
-        {
-            Destroy(gate);
-        }
-
-        SimpleCameraFollow.SetHorizontalLimits(new Vector2(82f, 152f));
-        ShowTransientMessage("The seal cracks. The depths await.", 2.4f);
+        bossDefeated = true;
+        StartRain();
+        ShowTrophy("BRINGER OF RAIN", "Rain returned.");
+        FinishRainArc();
     }
 
     public void CompleteGame()
@@ -209,19 +285,25 @@ public class GameStateController : MonoBehaviour
             return;
         }
 
+        bossDefeated = true;
+        StartRain();
+        ShowTrophy("BRINGER OF RAIN", "Rain returned.");
+        FinishRainArc();
+    }
+
+    private void FinishRainArc()
+    {
         storyPhase = StoryPhase.Finished;
         GameAudioController.Play(AudioCue.Victory);
-        showCenterMessage = true;
-        centerMessage =
-            "WARDEN BROKEN\n\n" +
-            "The drowned warden falls.\n" +
-            "Tide rushes free across the desert,\n" +
-            "and the sealed wells answer at last.\n\n" +
-            "Prototype arc complete.";
-        objectiveText = "Objective: Prototype Complete";
-        hintText = "Prototype arc complete. Press Play again to restart from Chapter I.";
+        objectiveText = "Objective: Rain Restored";
+        hintText = "Rain has returned. Press Play again to restart.";
         player?.SetInputLocked(false);
         player?.SetVisualHidden(false);
+        ShowReadableStory(
+            "BRINGER OF RAIN",
+            "The demon falls.\n\n" +
+            "Clouds gather over the aqueduct. The sealed wells open, and the first rain reaches the village.",
+            true);
     }
 
     private void Update()
@@ -233,6 +315,20 @@ public class GameStateController : MonoBehaviour
         else if (storyPhase == StoryPhase.TransitioningChapterThree && Time.unscaledTime >= transitionTeleportAt)
         {
             EnterChapterThree();
+        }
+
+        if (readableStoryVisible)
+        {
+            TickReadableStory();
+        }
+        else if (!ReadableStoriesBlocked && activeReadableTrigger != null && WasReadPressedThisFrame())
+        {
+            activeReadableTrigger.Open();
+        }
+
+        if (trophyVisible && Time.unscaledTime >= trophyExpiresAt)
+        {
+            trophyVisible = false;
         }
 
         if (storyPhase != StoryPhase.Finished &&
@@ -250,6 +346,11 @@ public class GameStateController : MonoBehaviour
     {
         EnsureStyles();
 
+        if (rainActive)
+        {
+            DrawRainOverlay();
+        }
+
         GUI.Box(new Rect(12f, 12f, 325f, 86f), GUIContent.none, panelStyle);
         GUI.Label(new Rect(24f, 20f, 120f, 28f), healthText, hudStyle);
         GUI.Label(new Rect(150f, 20f, 120f, 28f), manaText, hudStyle);
@@ -258,7 +359,15 @@ public class GameStateController : MonoBehaviour
         GUI.Box(new Rect(12f, Screen.height - 56f, 560f, 40f), GUIContent.none, panelStyle);
         GUI.Label(new Rect(24f, Screen.height - 49f, 520f, 28f), hintText, hintStyle);
 
-        if (showCenterMessage)
+        if (!readableStoryVisible && !ReadableStoriesBlocked && !string.IsNullOrWhiteSpace(interactionPrompt))
+        {
+            float promptWidth = Mathf.Min(300f, Screen.width - 40f);
+            Rect promptRect = new((Screen.width - promptWidth) * 0.5f, Screen.height - 106f, promptWidth, 36f);
+            GUI.Box(promptRect, GUIContent.none, panelStyle);
+            GUI.Label(new Rect(promptRect.x + 12f, promptRect.y + 7f, promptRect.width - 24f, 24f), interactionPrompt, promptStyle);
+        }
+
+        if (!readableStoryVisible && showCenterMessage)
         {
             float width = Mathf.Min(780f, Screen.width - 80f);
             float height = Mathf.Min(260f, Screen.height - 120f);
@@ -266,7 +375,184 @@ public class GameStateController : MonoBehaviour
             GUI.Box(panelRect, GUIContent.none, panelStyle);
             GUI.Label(new Rect(panelRect.x + 24f, panelRect.y + 24f, panelRect.width - 48f, panelRect.height - 48f), centerMessage, centerStyle);
         }
+
+        if (!readableStoryVisible && trophyVisible)
+        {
+            DrawTrophyToast();
+        }
+
+        if (readableStoryVisible)
+        {
+            DrawReadableStory();
+        }
     }
+
+    private void TickReadableStory()
+    {
+        if (!readableStoryFullyRevealed)
+        {
+            readableVisibleCharacterCount = Mathf.Min(
+                readableStoryBody.Length,
+                Mathf.FloorToInt((Time.unscaledTime - readableStoryStartedAt) * TypewriterCharactersPerSecond));
+
+            if (readableVisibleCharacterCount >= readableStoryBody.Length)
+            {
+                readableStoryFullyRevealed = true;
+            }
+        }
+
+        if (!WasReadPressedThisFrame())
+        {
+            return;
+        }
+
+        if (!readableStoryFullyRevealed)
+        {
+            readableVisibleCharacterCount = readableStoryBody.Length;
+            readableStoryFullyRevealed = true;
+            return;
+        }
+
+        HideReadableStory();
+    }
+
+    private void HideReadableStory()
+    {
+        readableStoryVisible = false;
+        readableStoryTitle = string.Empty;
+        readableStoryBody = string.Empty;
+        readableVisibleCharacterCount = 0;
+        readableStoryFullyRevealed = false;
+
+        if (readableStoryLocksInput)
+        {
+            player?.SetInputLocked(false);
+        }
+
+        readableStoryLocksInput = false;
+    }
+
+    private void DrawReadableStory()
+    {
+        GUI.Box(new Rect(0f, 0f, Screen.width, Screen.height), GUIContent.none, fullScreenOverlayStyle);
+
+        float horizontalMargin = Mathf.Clamp(Screen.width * 0.08f, 80f, 220f);
+        Rect titleRect = new(horizontalMargin, Screen.height * 0.18f, Screen.width - horizontalMargin * 2f, Screen.height * 0.2f);
+
+        int visibleCharacters = readableStoryFullyRevealed
+            ? readableStoryBody.Length
+            : Mathf.Clamp(readableVisibleCharacterCount, 0, readableStoryBody.Length);
+        string visibleBody = readableStoryBody.Substring(0, visibleCharacters);
+
+        Rect bodyRect = new(horizontalMargin, Screen.height * 0.42f, Screen.width - horizontalMargin * 2f, Screen.height * 0.32f);
+        int titleSize = Mathf.RoundToInt(Mathf.Clamp(Screen.height * 0.105f, 108f, 150f));
+        int bodySize = Mathf.RoundToInt(Mathf.Clamp(Screen.height * 0.058f, 62f, 92f));
+        FitTextStyle(storyTitleStyle, readableStoryTitle, titleRect, titleSize, 78);
+        FitTextStyle(storyBodyStyle, readableStoryBody, bodyRect, bodySize, 48);
+
+        DrawTextWithShadow(titleRect, readableStoryTitle, storyTitleStyle, StoryTextColor, StoryShadowColor, 5f);
+        DrawTextWithShadow(bodyRect, visibleBody, storyBodyStyle, StoryTextColor, StoryShadowColor, 4f);
+
+        string footerText = readableStoryFullyRevealed ? "Press W to close" : "Press W to reveal";
+        Rect footerRect = new(0f, Screen.height - 92f, Screen.width, 42f);
+        DrawTextWithShadow(footerRect, footerText, storyFooterStyle, new Color(0.78f, 0.78f, 0.72f, 1f), StoryShadowColor, 2f);
+    }
+
+    private void DrawTrophyToast()
+    {
+        float width = Mathf.Min(420f, Screen.width - 40f);
+        Rect toastRect = new(Screen.width - width - 20f, 112f, width, 78f);
+        GUI.Box(toastRect, GUIContent.none, panelStyle);
+        GUI.Label(new Rect(toastRect.x + 18f, toastRect.y + 10f, toastRect.width - 36f, 32f), trophyTitle, trophyTitleStyle);
+        GUI.Label(new Rect(toastRect.x + 18f, toastRect.y + 44f, toastRect.width - 36f, 24f), trophySubtitle, trophyBodyStyle);
+    }
+
+    private static void FitTextStyle(GUIStyle style, string text, Rect rect, int maxFontSize, int minFontSize)
+    {
+        style.fontSize = maxFontSize;
+        GUIContent content = new(text);
+        while (style.fontSize > minFontSize && style.CalcHeight(content, rect.width) > rect.height)
+        {
+            style.fontSize--;
+        }
+    }
+
+    private static void DrawTextWithShadow(Rect rect, string text, GUIStyle style, Color textColor, Color shadowColor, float shadowOffset)
+    {
+        Color originalColor = style.normal.textColor;
+        style.normal.textColor = shadowColor;
+        GUI.Label(new Rect(rect.x + shadowOffset, rect.y + shadowOffset, rect.width, rect.height), text, style);
+        style.normal.textColor = textColor;
+        GUI.Label(rect, text, style);
+        style.normal.textColor = originalColor;
+    }
+
+    private void DrawRainOverlay()
+    {
+        Color previousColor = GUI.color;
+        float elapsed = Time.unscaledTime - rainStartedAt;
+        int dropCount = Mathf.Clamp(Screen.width / 9, 72, 180);
+
+        for (int i = 0; i < dropCount; i++)
+        {
+            float seed = Hash01(i);
+            float speed = Mathf.Lerp(260f, 430f, Hash01(i + 41));
+            float x = Mathf.Repeat(seed * Screen.width + elapsed * Mathf.Lerp(-26f, 18f, Hash01(i + 7)), Screen.width);
+            float y = Mathf.Repeat(Hash01(i + 19) * (Screen.height + 120f) + elapsed * speed, Screen.height + 120f) - 80f;
+            float height = Mathf.Lerp(14f, 28f, Hash01(i + 83));
+            float width = Hash01(i + 131) > 0.78f ? 2f : 1f;
+
+            GUI.color = new Color(RainColor.r, RainColor.g, RainColor.b, Mathf.Lerp(0.22f, RainColor.a, Hash01(i + 193)));
+            GUI.DrawTexture(new Rect(x, y, width, height), rainTexture);
+        }
+
+        GUI.color = previousColor;
+    }
+
+    private void StartRain()
+    {
+        if (rainActive)
+        {
+            return;
+        }
+
+        rainActive = true;
+        rainStartedAt = Time.unscaledTime;
+
+        Camera camera = Camera.main;
+        if (camera != null)
+        {
+            camera.backgroundColor = new Color(0.56f, 0.66f, 0.75f, 1f);
+        }
+    }
+
+    private void ShowTrophy(string title, string subtitle)
+    {
+        if (trophyShown)
+        {
+            return;
+        }
+
+        trophyShown = true;
+        trophyVisible = true;
+        trophyTitle = title;
+        trophySubtitle = subtitle;
+        trophyExpiresAt = Time.unscaledTime + 5.2f;
+        GameAudioController.Play(AudioCue.Checkpoint);
+    }
+
+    private static bool WasReadPressedThisFrame()
+    {
+        Keyboard keyboard = Keyboard.current;
+        return keyboard != null && keyboard.wKey.wasPressedThisFrame;
+    }
+
+    private static float Hash01(int seed)
+    {
+        return Mathf.Repeat(Mathf.Sin(seed * 12.9898f) * 43758.5453f, 1f);
+    }
+
+    private bool ReadableStoriesBlocked => storyPhase == StoryPhase.ChapterThree && !bossDefeated;
 
     private void UnlockAqueduct()
     {
@@ -422,6 +708,8 @@ public class GameStateController : MonoBehaviour
         }
 
         storyPhase = StoryPhase.ChapterThree;
+        activeReadableTrigger = null;
+        interactionPrompt = string.Empty;
         centerMessage =
             "CHAPTER III\n\n" +
             "WARDEN'S COURT\n\n" +
@@ -440,14 +728,23 @@ public class GameStateController : MonoBehaviour
         objectiveText = "Objective: Reach the lower pumps and restore the twin valves (0/2).";
         centerMessage = string.Empty;
         hintText = DefaultHintText;
+        interactionPrompt = string.Empty;
         showCenterMessage = false;
+        readableStoryVisible = false;
+        readableStoryLocksInput = false;
+        bossDefeated = false;
+        rainActive = false;
+        trophyVisible = false;
+        trophyShown = false;
     }
 
     private void UpdateObjective()
     {
         if (storyPhase == StoryPhase.ChapterThree)
         {
-            objectiveText = "Objective: Break the warden of the drowned vault.";
+            objectiveText = bossDefeated
+                ? "Objective: Rain Restored"
+                : "Objective: Break the warden of the drowned vault.";
         }
         else if (storyPhase == StoryPhase.ChapterTwo)
         {
@@ -455,7 +752,7 @@ public class GameStateController : MonoBehaviour
         }
         else if (storyPhase == StoryPhase.Finished)
         {
-            objectiveText = "Objective: Prototype Complete";
+            objectiveText = "Objective: Rain Restored";
         }
         else if (CanExit)
         {
@@ -467,18 +764,6 @@ public class GameStateController : MonoBehaviour
         }
     }
 
-    private void ShowIntro()
-    {
-        introVisible = true;
-        showCenterMessage = true;
-        centerMessage =
-            "DESERT AQUEDUCT\n\n" +
-            "The wells were sealed by decree.\n" +
-            "Drop through the cracked spillway, restore the twin valves,\n" +
-            "and let justice flow.\n\n" +
-            "Burst wardens and machinery with water.";
-    }
-
     private void HideCenterText()
     {
         introVisible = false;
@@ -488,11 +773,15 @@ public class GameStateController : MonoBehaviour
 
     private void EnsureStyles()
     {
+        Font uiFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        storyFont ??= Font.CreateDynamicFontFromOSFont("Menlo", 96);
+
         if (hudStyle == null)
         {
             hudStyle = new GUIStyle(GUI.skin.label)
             {
-                fontSize = 18
+                font = uiFont,
+                fontSize = 20
             };
             ApplyTextColor(hudStyle, UiTextColor);
         }
@@ -501,7 +790,8 @@ public class GameStateController : MonoBehaviour
         {
             hintStyle = new GUIStyle(hudStyle)
             {
-                fontSize = 15
+                font = uiFont,
+                fontSize = 17
             };
             ApplyTextColor(hintStyle, UiTextColor);
         }
@@ -510,7 +800,8 @@ public class GameStateController : MonoBehaviour
         {
             centerStyle = new GUIStyle(GUI.skin.label)
             {
-                fontSize = 24,
+                font = uiFont,
+                fontSize = 28,
                 wordWrap = true,
                 alignment = TextAnchor.MiddleCenter
             };
@@ -528,6 +819,98 @@ public class GameStateController : MonoBehaviour
                 normal = { background = background }
             };
         }
+
+        if (fullScreenOverlayStyle == null)
+        {
+            fullScreenOverlayStyle = new GUIStyle(GUI.skin.box)
+            {
+                normal = { background = CreateStyleTexture(new Color(0.03f, 0.035f, 0.045f, 0.96f)) }
+            };
+        }
+
+        if (storyTitleStyle == null)
+        {
+            storyTitleStyle = new GUIStyle(centerStyle)
+            {
+                font = storyFont != null ? storyFont : uiFont,
+                fontSize = 128,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleCenter,
+                wordWrap = true
+            };
+            ApplyTextColor(storyTitleStyle, StoryTextColor);
+        }
+
+        if (storyBodyStyle == null)
+        {
+            storyBodyStyle = new GUIStyle(centerStyle)
+            {
+                font = storyFont != null ? storyFont : uiFont,
+                fontSize = 76,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleCenter,
+                wordWrap = true
+            };
+            ApplyTextColor(storyBodyStyle, StoryTextColor);
+        }
+
+        if (storyFooterStyle == null)
+        {
+            storyFooterStyle = new GUIStyle(hintStyle)
+            {
+                font = uiFont,
+                fontSize = 30,
+                alignment = TextAnchor.MiddleCenter
+            };
+            ApplyTextColor(storyFooterStyle, new Color(0.78f, 0.78f, 0.72f, 1f));
+        }
+
+        if (promptStyle == null)
+        {
+            promptStyle = new GUIStyle(hintStyle)
+            {
+                font = uiFont,
+                fontSize = 16,
+                alignment = TextAnchor.MiddleCenter
+            };
+            ApplyTextColor(promptStyle, UiTextColor);
+        }
+
+        if (trophyTitleStyle == null)
+        {
+            trophyTitleStyle = new GUIStyle(hudStyle)
+            {
+                font = uiFont,
+                fontSize = 22,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleLeft
+            };
+            ApplyTextColor(trophyTitleStyle, UiTextColor);
+        }
+
+        if (trophyBodyStyle == null)
+        {
+            trophyBodyStyle = new GUIStyle(hintStyle)
+            {
+                font = uiFont,
+                fontSize = 15,
+                alignment = TextAnchor.MiddleLeft
+            };
+            ApplyTextColor(trophyBodyStyle, UiTextColor);
+        }
+
+        if (rainTexture == null)
+        {
+            rainTexture = CreateStyleTexture(Color.white);
+        }
+    }
+
+    private static Texture2D CreateStyleTexture(Color color)
+    {
+        Texture2D texture = new(1, 1);
+        texture.SetPixel(0, 0, color);
+        texture.Apply();
+        return texture;
     }
 
     private static void ApplyTextColor(GUIStyle style, Color color)

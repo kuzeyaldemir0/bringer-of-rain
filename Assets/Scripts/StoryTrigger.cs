@@ -4,17 +4,23 @@ using UnityEngine;
 public class StoryTrigger : MonoBehaviour
 {
     private GameStateController gameState;
-    private string message;
-    private float duration;
-    private bool fireOnce;
-    private bool fired;
+    private string title;
+    private string body;
+    private string prompt;
+    private bool lockPlayerInput;
+
+    public void Configure(GameStateController controller, string storyTitle, string storyBody, bool lockInput = true, string promptText = "Press W to read")
+    {
+        gameState = controller;
+        title = storyTitle;
+        body = storyBody;
+        lockPlayerInput = lockInput;
+        prompt = promptText;
+    }
 
     public void Configure(GameStateController controller, string storyMessage, float messageDuration, bool onlyOnce)
     {
-        gameState = controller;
-        message = storyMessage;
-        duration = messageDuration;
-        fireOnce = onlyOnce;
+        Configure(controller, string.Empty, storyMessage);
     }
 
     private void Awake()
@@ -25,10 +31,22 @@ public class StoryTrigger : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if ((!fireOnce || !fired) && other.TryGetComponent(out PlayerController _))
+        if (other.TryGetComponent(out PlayerController _))
         {
-            fired = true;
-            gameState?.ShowStoryMessage(message, duration);
+            gameState?.SetReadableTarget(this, prompt);
         }
+    }
+
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        if (other.TryGetComponent(out PlayerController _))
+        {
+            gameState?.ClearReadableTarget(this);
+        }
+    }
+
+    public void Open()
+    {
+        gameState?.ShowReadableStory(title, body, lockPlayerInput);
     }
 }
